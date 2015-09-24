@@ -1,0 +1,4 @@
+man/
+*.egg-info
+pip-selfcheck.json
+.coverage*
