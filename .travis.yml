@@ -3,6 +3,9 @@ language: python
 # for container-y googdness:
 sudo: false
 
+addons:
+  postgresql: "9.2"
+
 python:
   - "3.4"
   - "2.7"
@@ -13,6 +16,7 @@ install: "pip install -Ue .[test,build]"
 before_script:
 - sh -c "psql -c 'create database testdb' -U postgres"
 - sh -c 'psql -d testdb -c "CREATE EXTENSION btree_gist;" -U postgres'
+- psql --version
 
 # command to run tests, e.g. python setup.py test
 script: DB_URL=postgres://postgres@localhost/testdb nosetests --with-cov --cov=mortar_mixins
