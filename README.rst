@@ -9,7 +9,7 @@
 mortar_mixins
 =============
 
-SQLAlchemy mixins for use with Postgres.
+SQLAlchemy mixins for use with Postgres 9.2+.
 
 Install from PyPI with pip.
 
@@ -31,9 +31,8 @@ Get a clone of the git repo and then do the following::
 Releasing
 ---------
 
-::
+To make a release, just update the version in ``setup.py``, tag it
+and push to https://github.com/Mortar/mortar_mixins
+and Travis CI should take care of the rest.
 
-  $ bin/pip install -e .[test,build]
-  $ bin/python setup.py sdist bdist_wheel
-  $ bin/twine upload dist/mortar_mixins-<version>*
 
