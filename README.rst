@@ -1,3 +1,11 @@
+|Travis|_ |Coveralls|_
+
+.. |Travis| image:: https://api.travis-ci.org/Mortar/mortar_mixins.png?branch=master
+.. _Travis: https://travis-ci.org/Mortar/mortar_mixins
+
+.. |Coveralls| image:: https://coveralls.io/repos/Mortar/mortar_mixins/badge.png?branch=master
+.. _Coveralls: https://coveralls.io/r/Mortar/mortar_mixins?branch=master
+
 mortar_mixins
 =============
 

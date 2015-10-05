@@ -13,7 +13,7 @@ setup(
     author_email='chris@withers.org',
     license='MIT',
     description="SQLAlchemy mixins for use with Postgres.",
-    long_description=open(os.path.join(base_dir,'README.rst')).read(),
+    long_description=open(os.path.join(base_dir, 'README.rst')).read(),
     url='https://github.com/Mortar/mortar_mixins',
     packages=find_packages(),
     include_package_data=True,
@@ -24,7 +24,7 @@ setup(
         'psycopg2',
         ),
     extras_require=dict(
-        test=['nose', 'nose-cov','testfixtures'],
+        test=['nose', 'nose-cov','testfixtures', 'coveralls'],
         build=['setuptools-git', 'wheel', 'twine']
         ),
     )
