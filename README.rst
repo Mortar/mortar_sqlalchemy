@@ -19,7 +19,7 @@ Development
 Get a clone of the git repo and then do the following::
 
   virtualenv .
-  bin/py install -e .[build,test]
+  bin/pip install -e .[build,test]
   
   sudo -u postgres psql -d postgres -c "create user testuser with password 'testpassword';"
   sudo -u postgres createdb -O testuser testdb
