@@ -91,7 +91,7 @@ class CompareTests(TestCase):
                 self.fail(compare(actual, expected=message,
                                   show_whitespace=True,
                                   raises=False))
-        else:
+        else: # pragma: no cover
             self.fail('No exception raised!')
 
     def test_identical(self):
