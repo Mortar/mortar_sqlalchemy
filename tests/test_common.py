@@ -183,3 +183,6 @@ class CompareTests(TestCase):
             "'id': 1 != 2",
             check_relationships=True,
         )
+
+    def test_ignore_fields(self):
+        compare(self.Model(id=1), self.Model(id=2), ignore_fields=['id'])

@@ -51,6 +51,7 @@ class Common(object):
 def compare_common(x, y, context):
 
     check_relationships = context.get_option('check_relationships', False)
+    ignore_fields = context.get_option('ignore_fields', ())
 
     if type(x) is not type(y):
         return compare_simple(x, y, context)
@@ -61,9 +62,15 @@ def compare_common(x, y, context):
         attrs = {}
         state = inspect(obj)
         for name, attr in inspect(obj).attrs.items():
-            if check_relationships or name not in state.mapper.relationships:
-                attrs[name] = attr.value
+            if name in ignore_fields:
+                continue
+            elif name in state.mapper.relationships and not check_relationships:
+                continue
+            attrs[name] = attr.value
         args.append(attrs)
+
+    if ignore_fields and args[0]==args[1]:
+        return
 
     args.append(context)
     args.append(x)
