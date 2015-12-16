@@ -1,7 +1,7 @@
 from datetime import datetime as dt
 from unittest import TestCase
 
-from mortar_rdb.testing import get_session
+from mortar_rdb.testing import get_session, register_session
 from psycopg2.extras import DateTimeRange as Range
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,6 +14,10 @@ from mortar_mixins.temporal import Temporal
 
 
 class Base(object):
+
+    @classmethod
+    def setUpClass(cls):
+        register_session(transactional=False)
 
     def setUp(self):
         b = declarative_base()
