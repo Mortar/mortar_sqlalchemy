@@ -39,7 +39,7 @@ class Common(object):
 
     def __repr__(self):
         content = []
-        for name, attr in inspect(self).attrs.items():
+        for name, attr in sorted(inspect(self).attrs.items()):
             if attr.value is None:
                 continue
             content.append('%s=%r' % (name, attr.value))

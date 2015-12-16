@@ -14,6 +14,7 @@ class MoreTests(TestCase):
         self.Base = declarative_base()
         class Model(Common, self.Base):
             id = Column(Integer, primary_key=True)
+            value = Column(Integer)
         self.Model = Model
 
     def test_table_name(self):
@@ -51,10 +52,10 @@ class MoreTests(TestCase):
         self.assertTrue(self.Model(id=1) != self.Model(id=2))
 
     def test_repr(self):
-        compare('Model(id=1)', repr(self.Model(id=1)))
+        compare('Model(id=1, value=3)', repr(self.Model(id=1, value=3)))
 
     def test_str(self):
-        compare('Model(id=1)', str(self.Model(id=1)))
+        compare('Model(id=3, value=1)', str(self.Model(id=3, value=1)))
 
 
 class CompareTests(TestCase):
