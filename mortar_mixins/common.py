@@ -39,10 +39,10 @@ class Common(object):
 
     def __repr__(self):
         content = []
-        for key, val in sorted(self.__dict__.items()):
-            if key == '_sa_instance_state':
+        for name, attr in inspect(self).attrs.items():
+            if attr.value is None:
                 continue
-            content.append('%s=%r' % (key, val))
+            content.append('%s=%r' % (name, attr.value))
         return '%s(%s)' % (self.__class__.__name__, ', '.join(content))
 
     __str__ = __repr__
