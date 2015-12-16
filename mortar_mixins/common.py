@@ -1,4 +1,5 @@
 import re
+from sqlalchemy import inspect
 from sqlalchemy.util import classproperty
 
 name_re = re.compile('([a-z]|^)([A-Z])')
@@ -26,14 +27,10 @@ class Common(object):
     def __eq__(self, other):
         if type(self) is not type(other):
             return False
-        a_keys = set(self.__dict__)
-        b_keys = set(other.__dict__)
-        a_keys.discard('_sa_instance_state')
-        b_keys.discard('_sa_instance_state')
-        if a_keys != b_keys:
-            return False
-        for key in (a_keys & b_keys):
-            if self.__dict__[key]!=other.__dict__[key]:
+        self_attrs = inspect(self).attrs
+        other_attrs = inspect(other).attrs
+        for name, attr in self_attrs.items():
+            if attr.value != other_attrs[name].value:
                 return False
         return True
 
