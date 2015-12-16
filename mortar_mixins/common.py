@@ -47,3 +47,35 @@ class Common(object):
 
     __str__ = __repr__
 
+
+def compare_common(x, y, context):
+
+    check_relationships = context.get_option('check_relationships', False)
+
+    if type(x) is not type(y):
+        return compare_simple(x, y, context)
+
+    args = []
+
+    for obj in x, y:
+        attrs = {}
+        state = inspect(obj)
+        for name, attr in inspect(obj).attrs.items():
+            if check_relationships or name not in state.mapper.relationships:
+                attrs[name] = attr.value
+        args.append(attrs)
+
+    args.append(context)
+    args.append(x)
+
+    return _compare_mapping(*args)
+
+
+try:
+    from testfixtures.comparison import (
+        register, _compare_mapping, compare_simple
+    )
+except ImportError: # pragma: no cover
+    pass
+else:
+    register(Common, compare_common)
