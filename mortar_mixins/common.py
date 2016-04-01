@@ -1,5 +1,6 @@
 import re
 from sqlalchemy import inspect
+from sqlalchemy.orm.state import AttributeState
 from sqlalchemy.util import classproperty
 
 name_re = re.compile('([a-z]|^)([A-Z])')
@@ -39,8 +40,12 @@ class Common(object):
 
     def __repr__(self):
         content = []
-        for name, attr in sorted(inspect(self).attrs.items()):
+        state = inspect(self)
+        relationships = state.mapper.relationships
+        for name, attr in sorted(state.attrs.items()):
             if attr.value is None:
+                continue
+            if name in relationships:
                 continue
             content.append('%s=%r' % (name, attr.value))
         return '%s(%s)' % (self.__class__.__name__, ', '.join(content))

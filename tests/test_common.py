@@ -8,14 +8,32 @@ from mortar_rdb import get_session
 from mortar_rdb.testing import register_session
 
 
-class MoreTests(TestCase):
+class SetupModels(object):
 
     def setUp(self):
+        register_session(transactional=False)
+
         self.Base = declarative_base()
+
         class Model(Common, self.Base):
-            id = Column(Integer, primary_key=True)
+            id =  Column(Integer, primary_key=True)
             value = Column(Integer)
+
+        class AnotherModel(Common, self.Base):
+            id = Column(Integer, primary_key=True)
+            attr = Column(Integer)
+            other_id = Column(Integer, ForeignKey('model.id'))
+            other = relationship("Model")
+
         self.Model = Model
+        self.AnotherModel = AnotherModel
+
+        self.session = get_session()
+        self.addCleanup(self.session.rollback)
+        self.Base.metadata.create_all(self.session.bind)
+
+
+class CommonTests(SetupModels, TestCase):
 
     def test_table_name(self):
         compare(self.Model.__table__.name, 'model')
@@ -57,29 +75,15 @@ class MoreTests(TestCase):
     def test_str(self):
         compare('Model(id=3, value=1)', str(self.Model(id=3, value=1)))
 
+    def test_repr_relationships_excluded(self):
+        model = self.AnotherModel(id=1, other=self.Model(id=1, value=42))
+        self.session.add(model)
+        self.session.flush()
+        compare('AnotherModel(id=1, other_id=1)',
+                actual=str(model))
 
-class CompareTests(TestCase):
 
-    def setUp(self):
-        register_session(transactional=False)
-
-        Base = declarative_base()
-
-        class Model(Common, Base):
-            id =  Column(Integer, primary_key=True)
-
-        class AnotherModel(Common, Base):
-            id = Column(Integer, primary_key=True)
-            attr = Column(Integer)
-            other_id = Column(Integer, ForeignKey('model.id'))
-            other = relationship("Model")
-
-        self.Model = Model
-        self.AnotherModel = AnotherModel
-
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        Base.metadata.create_all(self.session.bind)
+class CompareTests(SetupModels, TestCase):
 
     def check_raises(self, x, y, message, **kw):
         try:
@@ -105,6 +109,9 @@ class CompareTests(TestCase):
         self.check_raises(
             self.Model(id=1), self.Model(id=2),
             "Model not as expected:\n"
+            '\n'
+            'same:\n'
+            "['value']\n"
             "\n"
             "values differ:\n"
             "'id': 1 != 2"
@@ -179,6 +186,9 @@ class CompareTests(TestCase):
             "'other_id': 1 != None\n"
             '\n'
             "While comparing ['other']: Model not as expected:\n"
+            '\n'
+            'same:\n'
+            "['value']\n"
             '\n'
             'values differ:\n'
             "'id': 1 != 2",
