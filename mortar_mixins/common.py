@@ -19,6 +19,17 @@ def de_hump(cls):
     return name_re.sub(name_subber,cls.__name__)
 
 
+def comparable_attributes(obj):
+    state = inspect(obj)
+    relationships = state.mapper.relationships
+    for name, attr in state.attrs.items():
+        rel = relationships.get(name)
+        if rel is not None:
+            if any(r.backref == name for r in rel._reverse_property):
+                continue
+        yield name, attr.value, rel is not None
+
+
 class Common(object):
     
     @classproperty
@@ -28,26 +39,21 @@ class Common(object):
     def __eq__(self, other):
         if type(self) is not type(other):
             return False
-        self_attrs = inspect(self).attrs
         other_attrs = inspect(other).attrs
-        for name, attr in self_attrs.items():
-            if attr.value != other_attrs[name].value:
+        for name, value, _ in comparable_attributes(self):
+            if value != other_attrs[name].value:
                 return False
         return True
 
     def __ne__(self, other):
-        return not (self==other)
+        return not (self == other)
 
     def __repr__(self):
         content = []
-        state = inspect(self)
-        relationships = state.mapper.relationships
-        for name, attr in sorted(state.attrs.items()):
-            if attr.value is None:
+        for name, value, is_relationship in sorted(comparable_attributes(self)):
+            if value is None or is_relationship:
                 continue
-            if name in relationships:
-                continue
-            content.append('%s=%r' % (name, attr.value))
+            content.append('%s=%r' % (name, value))
         return '%s(%s)' % (self.__class__.__name__, ', '.join(content))
 
     __str__ = __repr__
@@ -65,13 +71,12 @@ def compare_common(x, y, context):
 
     for obj in x, y:
         attrs = {}
-        state = inspect(obj)
-        for name, attr in inspect(obj).attrs.items():
+        for name, value, is_relationship in comparable_attributes(obj):
             if name in ignore_fields:
                 continue
-            elif name in state.mapper.relationships and not check_relationships:
+            elif is_relationship and not check_relationships:
                 continue
-            attrs[name] = attr.value
+            attrs[name] = value
         args.append(attrs)
 
     if ignore_fields and args[0]==args[1]:

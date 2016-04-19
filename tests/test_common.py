@@ -23,7 +23,7 @@ class SetupModels(object):
             id = Column(Integer, primary_key=True)
             attr = Column(Integer)
             other_id = Column(Integer, ForeignKey('model.id'))
-            other = relationship("Model")
+            other = relationship("Model", backref='another')
 
         self.Model = Model
         self.AnotherModel = AnotherModel
@@ -87,7 +87,7 @@ class CompareTests(SetupModels, TestCase):
 
     def check_raises(self, x, y, message, **kw):
         try:
-            compare(x, y , **kw)
+            compare(x, y, **kw)
         except Exception as e:
             if not isinstance(e, AssertionError):
                 raise # pragma: no cover
@@ -194,6 +194,14 @@ class CompareTests(SetupModels, TestCase):
             "'id': 1 != 2",
             check_relationships=True,
         )
+
+    def test_both_reference_same_other(self):
+        db = self.AnotherModel(id=2, other=self.Model(id=1, value=2))
+        self.session.add(db)
+        self.session.commit()
+        db = self.session.query(self.AnotherModel).one()
+        raw = self.AnotherModel(id=2, other=self.Model(id=1, value=2))
+        compare(raw, db, ignore_fields=['other_id'])
 
     def test_ignore_fields(self):
         compare(self.Model(id=1), self.Model(id=2), ignore_fields=['id'])
