@@ -23,11 +23,9 @@ def comparable_attributes(obj):
     state = inspect(obj)
     relationships = state.mapper.relationships
     for name, attr in state.attrs.items():
-        rel = relationships.get(name)
-        if rel is not None:
-            if any(r.backref == name for r in rel._reverse_property):
-                continue
-        yield name, attr.value, rel is not None
+        if name in relationships:
+            continue
+        yield name, attr.value
 
 
 class Common(object):
@@ -40,7 +38,7 @@ class Common(object):
         if type(self) is not type(other):
             return False
         other_attrs = inspect(other).attrs
-        for name, value, _ in comparable_attributes(self):
+        for name, value in comparable_attributes(self):
             if value != other_attrs[name].value:
                 return False
         return True
@@ -50,10 +48,9 @@ class Common(object):
 
     def __repr__(self):
         content = []
-        for name, value, is_relationship in sorted(comparable_attributes(self)):
-            if value is None or is_relationship:
-                continue
-            content.append('%s=%r' % (name, value))
+        for name, value in sorted(comparable_attributes(self)):
+            if value is not None:
+                content.append('%s=%r' % (name, value))
         return '%s(%s)' % (self.__class__.__name__, ', '.join(content))
 
     __str__ = __repr__
@@ -61,7 +58,6 @@ class Common(object):
 
 def compare_common(x, y, context):
 
-    check_relationships = context.get_option('check_relationships', False)
     ignore_fields = context.get_option('ignore_fields', ())
 
     if type(x) is not type(y):
@@ -71,10 +67,8 @@ def compare_common(x, y, context):
 
     for obj in x, y:
         attrs = {}
-        for name, value, is_relationship in comparable_attributes(obj):
+        for name, value in comparable_attributes(obj):
             if name in ignore_fields:
-                continue
-            elif is_relationship and not check_relationships:
                 continue
             attrs[name] = value
         args.append(attrs)

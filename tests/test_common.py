@@ -161,41 +161,7 @@ class CompareTests(SetupModels, TestCase):
             "'other_id': 1 != None"
         )
 
-    def test_db_versus_non_db_not_equal_check_relationship(self):
-        self.session.add(self.Model(id=1))
-        self.session.add(self.AnotherModel(id=2, other_id=1))
-        self.session.commit()
-
-        db = self.session\
-            .query(self.AnotherModel)\
-            .options(joinedload(self.AnotherModel.other, innerjoin=True))\
-            .one()
-
-        raw = self.AnotherModel(id=2, other=self.Model(id=2), attr=6)
-
-        self.check_raises(
-            db, raw,
-            "AnotherModel not as expected:\n"
-            "\n"
-            "same:\n"
-            "['id']\n"
-            "\n"
-            "values differ:\n"
-            "'attr': None != 6\n"
-            "'other': Model(id=1) != Model(id=2)\n"
-            "'other_id': 1 != None\n"
-            '\n'
-            "While comparing ['other']: Model not as expected:\n"
-            '\n'
-            'same:\n'
-            "['value']\n"
-            '\n'
-            'values differ:\n'
-            "'id': 1 != 2",
-            check_relationships=True,
-        )
-
-    def test_both_reference_same_other(self):
+    def test_backref_equal(self):
         db = self.AnotherModel(id=2, other=self.Model(id=1, value=2))
         self.session.add(db)
         self.session.commit()
