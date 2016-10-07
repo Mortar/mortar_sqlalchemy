@@ -270,7 +270,9 @@ class ConstraintTests(Base, TestCase):
         self.session.add(self.Model(
                 name = 'Name'
                 ))
-        with ShouldRaise(IntegrityError):
+        # SQLAlchemy used to raise an IntegrityError here
+        # 1.10 onwards raises a CompileError
+        with ShouldRaise():
             self.session.flush()
         
     def test_ok_1(self):
