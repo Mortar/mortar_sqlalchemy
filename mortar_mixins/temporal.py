@@ -63,10 +63,10 @@ class Temporal(object):
         if value_from is None and value_to is None:
             return 'always'
         if self.value_from is None:
-            return 'until %s' % self.value_to.date()
+            return 'until %s' % self.value_to
         if self.value_to is None:
-            return '%s onwards' % self.value_from.date()
-        return '%s to %s' % (self.value_from.date(), self.value_to.date())
+            return '%s onwards' % self.value_from
+        return '%s to %s' % (self.value_from, self.value_to)
 
 
 def add_constraints(mapper, class_):

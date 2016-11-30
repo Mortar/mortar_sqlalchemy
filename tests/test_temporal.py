@@ -388,22 +388,28 @@ class MethodTests(Base, TestCase):
 
     def test_period_str_end(self):
         compare(self.Model(value_to=dt(2001, 1, 1)).period_str(),
-                'until 2001-01-01')
+                'until 2001-01-01 00:00:00')
     
     def test_period_str_start(self):
         compare(self.Model(value_from=dt(2001, 1, 1)).period_str(),
-                '2001-01-01 onwards')
+                '2001-01-01 00:00:00 onwards')
     
     def test_period_str_both(self):
         compare(self.Model(
                 period=Range(dt(2000, 1, 1), dt(2001, 1, 1))
                 ).period_str(),
-                '2000-01-01 to 2001-01-01')
-    
+                '2000-01-01 00:00:00 to 2001-01-01 00:00:00')
+
+    def test_period_str_both_with_time(self):
+        compare(self.Model(
+                period=Range(dt(2000, 1, 1, 16), dt(2001, 1, 1, 15))
+                ).period_str(),
+                '2000-01-01 16:00:00 to 2001-01-01 15:00:00')
+
     def test_period_str_neither(self):
         compare(self.Model().period_str(),
                 'unknown')
     
     def test_period_both_none(self):
-        compare(self.Model(period=Range(None,None)).period_str(),
+        compare(self.Model(period=Range(None, None)).period_str(),
                 'always')
