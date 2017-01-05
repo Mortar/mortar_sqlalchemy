@@ -22,7 +22,8 @@ class Base(object):
     def setUp(self):
         b = declarative_base()
         class Model(Temporal, Common, b):
-            name = Column(String, primary_key=True)
+            key_columns = ['name']
+            name = Column(String)
         self.Model = Model
         self.session = get_session()
         self.addCleanup(self.session.rollback)
@@ -353,8 +354,9 @@ class TestExcludeConstraintConstruction(TestCase):
     def setUp(self):
         Base = declarative_base()
         class Booking(Temporal, Common, Base):
-            hotel =  Column(String, primary_key=True)
-            room =  Column(Integer, primary_key=True)
+            key_columns = ('hotel', 'room')
+            hotel =  Column(String)
+            room =  Column(Integer)
         self.Booking = Booking
         self.session = get_session()
         self.addCleanup(self.session.rollback)

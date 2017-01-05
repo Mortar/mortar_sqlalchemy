@@ -1,5 +1,6 @@
 from psycopg2.extras import DateTimeRange
 from sqlalchemy import Column, CheckConstraint
+from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import (
     ExcludeConstraint,
     TSRANGE as Range,
@@ -21,8 +22,9 @@ class Temporal(object):
         else:
             period = kw.pop('period', None)
         super(Temporal, self).__init__(period=period, **kw)
-        
-    period = Column(Range(), nullable=False, primary_key=True)
+
+    id = Column(Integer, primary_key=True)
+    period = Column(Range(), nullable=False)
 
     @classmethod
     def value_at(cls, timestamp):
@@ -71,10 +73,10 @@ class Temporal(object):
 
 def add_constraints(mapper, class_):
     table = class_.__table__
-    elements = [('period', '&&')]
-    for col in table.primary_key.columns:
-        if col.name!='period':
-            elements.append((col, '='))
+    elements = []
+    for col_name in class_.key_columns:
+        elements.append((getattr(class_, col_name), '='))
+    elements.append(('period', '&&'))
     table.append_constraint(ExcludeConstraint(*elements))
     table.append_constraint(CheckConstraint("period != 'empty'::tsrange"))
 
