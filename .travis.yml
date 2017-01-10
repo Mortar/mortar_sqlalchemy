@@ -7,6 +7,7 @@ addons:
   postgresql: "9.2"
 
 python:
+  - "3.5"
   - "3.4"
   - "2.7"
 
