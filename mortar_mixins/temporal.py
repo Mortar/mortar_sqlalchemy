@@ -10,6 +10,8 @@ from sqlalchemy.event import listen
 
 class Temporal(object):
 
+    key_columns = None
+
     def __init__(self, **kw):
         value_from = kw.pop('value_from', None)
         value_to = kw.pop('value_to', None)
@@ -73,11 +75,12 @@ class Temporal(object):
 
 def add_constraints(mapper, class_):
     table = class_.__table__
-    elements = []
-    for col_name in class_.key_columns:
-        elements.append((getattr(class_, col_name), '='))
-    elements.append(('period', '&&'))
-    table.append_constraint(ExcludeConstraint(*elements))
+    if class_.key_columns is not None:
+        elements = []
+        for col_name in class_.key_columns:
+            elements.append((getattr(class_, col_name), '='))
+        elements.append(('period', '&&'))
+        table.append_constraint(ExcludeConstraint(*elements))
     table.append_constraint(CheckConstraint("period != 'empty'::tsrange"))
 
 listen(Temporal, 'instrument_class', add_constraints, propagate=True)

@@ -415,3 +415,21 @@ class MethodTests(Base, TestCase):
     def test_period_both_none(self):
         compare(self.Model(period=Range(None, None)).period_str(),
                 'always')
+
+
+class TestNoKeyColumns(TestCase):
+
+    def setUp(self):
+        Base = declarative_base()
+        class NoKeys(Temporal, Common, Base):
+            col = Column(String)
+        self.Model = NoKeys
+        self.session = get_session()
+        self.addCleanup(self.session.rollback)
+        Base.metadata.create_all(self.session.bind)
+
+    def test_valid(self):
+        self.session.add(self.Model(col='a', period=Range(dt(2001, 1, 1))))
+        self.session.add(self.Model(col='b', period=Range(dt(2001, 1, 1))))
+        # you get the helper methods, but no exclude constraint
+        self.session.flush()
