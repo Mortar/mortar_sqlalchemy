@@ -13,7 +13,7 @@ from mortar_mixins.common import Common
 from mortar_mixins.temporal import Temporal
 
 
-class Base(object):
+class Helper(object):
 
     @classmethod
     def setUpClass(cls):
@@ -30,7 +30,7 @@ class Base(object):
         b.metadata.create_all(self.session.bind)
 
 
-class PropertyTests(Base, TestCase):
+class PropertyTests(Helper, TestCase):
 
     def setUp(self):
         super(PropertyTests, self).setUp()
@@ -68,7 +68,7 @@ class PropertyTests(Base, TestCase):
                 Range(None, dt(1999, 1, 1)))
 
 
-class ConstructorTests(Base, TestCase):
+class ConstructorTests(Helper, TestCase):
 
     def test_from(self):
         obj = self.Model(name = 'test', value_from = dt(2000, 1, 1))
@@ -99,7 +99,7 @@ class ConstructorTests(Base, TestCase):
                 )
 
 
-class ValueAtTests(Base, TestCase):
+class ValueAtTests(Helper, TestCase):
 
     def setUp(self):
         super(ValueAtTests, self).setUp()
@@ -138,7 +138,7 @@ class ValueAtTests(Base, TestCase):
         self._check(dt(2002, 1, 1), ['Name 1-3'])
 
 
-class ConstraintTests(Base, TestCase):
+class ConstraintTests(Helper, TestCase):
     
     def _check_valid(self, existing=(), new=(), exception=False):
         # both existing and new should be sequences of two-tuples
@@ -349,7 +349,7 @@ class ConstraintTests(Base, TestCase):
             self.session.flush()
 
 
-class TestExcludeConstraintConstruction(TestCase):
+class TestExcludeConstraintConstruction(Helper, TestCase):
 
     def setUp(self):
         Base = declarative_base()
@@ -386,7 +386,7 @@ class TestExcludeConstraintConstruction(TestCase):
                 ))
 
 
-class MethodTests(Base, TestCase):
+class MethodTests(Helper, TestCase):
 
     def test_period_str_end(self):
         compare(self.Model(value_to=dt(2001, 1, 1)).period_str(),
@@ -417,7 +417,7 @@ class MethodTests(Base, TestCase):
                 'always')
 
 
-class TestNoKeyColumns(TestCase):
+class TestNoKeyColumns(Helper, TestCase):
 
     def setUp(self):
         Base = declarative_base()
