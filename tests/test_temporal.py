@@ -4,7 +4,7 @@ from unittest import TestCase
 from mortar_rdb.testing import get_session, register_session
 from psycopg2.extras import DateTimeRange as Range
 from sqlalchemy import CheckConstraint, PrimaryKeyConstraint
-from sqlalchemy.dialects.postgresql.constraints import ExcludeConstraint
+from sqlalchemy.dialects.postgresql import ExcludeConstraint
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column
