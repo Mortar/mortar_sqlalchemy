@@ -469,9 +469,10 @@ class TestSingleTableInheritance(Helper, TestCase):
         # paranoid: only one table
         compare(self.Base.metadata.tables.keys(), expected=['stuff'])
         compare(
-            sorted(c.__class__ for c in self.TheTable.__table__.constraints),
-            expected=sorted(
-                (CheckConstraint, PrimaryKeyConstraint, ExcludeConstraint)
+            sorted(c.__class__.__name__
+                   for c in self.TheTable.__table__.constraints),
+            expected=(
+                'CheckConstraint', 'ExcludeConstraint', 'PrimaryKeyConstraint'
             )
         )
 
