@@ -74,6 +74,8 @@ class Temporal(object):
 
 
 def add_constraints(mapper, class_):
+    if mapper.polymorphic_map and not mapper.polymorphic_on:
+        return
     table = class_.__table__
     if class_.key_columns is not None:
         elements = []

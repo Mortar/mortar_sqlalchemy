@@ -3,6 +3,8 @@ from unittest import TestCase
 
 from mortar_rdb.testing import get_session, register_session
 from psycopg2.extras import DateTimeRange as Range
+from sqlalchemy import CheckConstraint, PrimaryKeyConstraint
+from sqlalchemy.dialects.postgresql.constraints import ExcludeConstraint
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column
@@ -431,5 +433,50 @@ class TestNoKeyColumns(Helper, TestCase):
     def test_valid(self):
         self.session.add(self.Model(col='a', period=Range(dt(2001, 1, 1))))
         self.session.add(self.Model(col='b', period=Range(dt(2001, 1, 1))))
+        # you get the helper methods, but no exclude constraint
+        self.session.flush()
+
+
+class TestSingleTableInheritance(Helper, TestCase):
+
+    def setUp(self):
+        self.Base = declarative_base()
+        class TheTable(Temporal, self.Base):
+            __tablename__ = 'stuff'
+            __mapper_args__ = dict(
+                polymorphic_on='type',
+                polymorphic_identity='base',
+            )
+            key_columns = ['type', 'col']
+            type = Column(String)
+            col = Column(String)
+        self.TheTable = TheTable
+        class Model1(TheTable):
+            __mapper_args = dict(
+                polymorphic_identity='model1',
+            )
+        class Model2(TheTable):
+            __mapper_args = dict(
+                polymorphic_identity='model2',
+            )
+        self.Model1 = Model1
+        self.Model2 = Model2
+        self.session = get_session()
+        self.addCleanup(self.session.rollback)
+        self.Base.metadata.create_all(self.session.bind)
+
+    def test_only_two_constraints_created(self):
+        # paranoid: only one table
+        compare(self.Base.metadata.tables.keys(), expected=['stuff'])
+        compare(
+            sorted(c.__class__ for c in self.TheTable.__table__.constraints),
+            expected=sorted(
+                (CheckConstraint, PrimaryKeyConstraint, ExcludeConstraint)
+            )
+        )
+
+    def test_add_one_of_each(self):
+        self.session.add(self.Model1(col='a', period=Range(dt(2001, 1, 1))))
+        self.session.add(self.Model2(col='b', period=Range(dt(2001, 1, 1))))
         # you get the helper methods, but no exclude constraint
         self.session.flush()
