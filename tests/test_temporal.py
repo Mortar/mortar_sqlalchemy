@@ -452,11 +452,11 @@ class TestSingleTableInheritance(Helper, TestCase):
             col = Column(String)
         self.TheTable = TheTable
         class Model1(TheTable):
-            __mapper_args = dict(
+            __mapper_args__ = dict(
                 polymorphic_identity='model1',
             )
         class Model2(TheTable):
-            __mapper_args = dict(
+            __mapper_args__ = dict(
                 polymorphic_identity='model2',
             )
         self.Model1 = Model1
