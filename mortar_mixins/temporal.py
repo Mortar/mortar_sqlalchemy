@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import (
     TSRANGE as Range,
     )
 from sqlalchemy.event import listen
+from sqlalchemy.ext.declarative import has_inherited_table
 
 
 class Temporal(object):
@@ -74,7 +75,7 @@ class Temporal(object):
 
 
 def add_constraints(mapper, class_):
-    if mapper.polymorphic_map and not mapper.polymorphic_on:
+    if has_inherited_table(class_):
         return
     table = class_.__table__
     if class_.key_columns is not None:
