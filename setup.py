@@ -15,7 +15,7 @@ setup(
     description="SQLAlchemy mixins for use with Postgres.",
     long_description=open(os.path.join(base_dir, 'README.rst')).read(),
     url='https://github.com/Mortar/mortar_mixins',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     include_package_data=True,
     zip_safe=False,
     install_requires = (
