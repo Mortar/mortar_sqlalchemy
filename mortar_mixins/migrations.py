@@ -1,6 +1,7 @@
 # helpers for use in migrations
 
-def migrate_temporal(table):
+
+def migrate_temporal(table):  # pragma: no cover
     # imports here so we don't have a dependency on alembic
     from alembic import op
     import sqlalchemy as sa
