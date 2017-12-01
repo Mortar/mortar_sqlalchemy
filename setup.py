@@ -1,5 +1,5 @@
 # Copyright (c) 2015 Chris Withers
-# See README.md for license details.
+# See LICENSE.txt for license details.
 
 import os
 from setuptools import setup, find_packages
