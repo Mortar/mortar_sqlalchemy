@@ -1,9 +1,11 @@
 man/
 *.egg-info
 pip-selfcheck.json
-.coverage*
+.coverage
+.coverage.*
 build/
 dist/
 bin/
 lib/
 include/
+.cache/

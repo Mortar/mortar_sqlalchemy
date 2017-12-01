@@ -1,0 +1,5 @@
+[run]
+source = mortar_mixins,tests
+
+[report]
+omit = */performance/*

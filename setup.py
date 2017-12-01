@@ -24,7 +24,7 @@ setup(
         'psycopg2',
         ),
     extras_require=dict(
-        test=['nose', 'nose-cov','testfixtures', 'coveralls'],
+        test=['pytest', 'coverage','testfixtures', 'coveralls'],
         build=['setuptools-git', 'wheel', 'twine']
         ),
     )
