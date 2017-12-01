@@ -12,6 +12,7 @@ from sqlalchemy.ext.declarative import has_inherited_table
 class Temporal(object):
 
     key_columns = None
+    value_columns = None
 
     def __init__(self, **kw):
         value_from = kw.pop('value_from', None)
@@ -60,6 +61,10 @@ class Temporal(object):
             lower = self.period.lower
         self.period = DateTimeRange(lower, timestamp)
 
+    @property
+    def value_tuple(self):
+        return tuple(getattr(self, col) for col in self.value_columns)
+
     def period_str(self):
         if self.period is None:
             return 'unknown'
@@ -74,16 +79,24 @@ class Temporal(object):
         return '%s to %s' % (self.value_from, self.value_to)
 
 
-def add_constraints(mapper, class_):
+def add_constraints_and_attributes(mapper, class_):
     if has_inherited_table(class_):
         return
     table = class_.__table__
+
     if class_.key_columns is not None:
         elements = []
         for col_name in class_.key_columns:
             elements.append((getattr(class_, col_name), '='))
         elements.append(('period', '&&'))
         table.append_constraint(ExcludeConstraint(*elements))
+
+        if class_.value_columns is None:
+            exclude = {'id', 'period'}
+            exclude.update(class_.key_columns)
+            class_.value_columns = [c.name for c in table.c
+                                    if c.name not in exclude]
     table.append_constraint(CheckConstraint("period != 'empty'::tsrange"))
 
-listen(Temporal, 'instrument_class', add_constraints, propagate=True)
+listen(Temporal, 'instrument_class', add_constraints_and_attributes,
+       propagate=True)

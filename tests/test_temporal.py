@@ -1,18 +1,21 @@
-from datetime import datetime as dt
 from unittest import TestCase
 
+import pytest
+from datetime import datetime as dt
+from mortar_mixins.common import Common
+from mortar_mixins.temporal import Temporal
 from mortar_rdb.testing import get_session, register_session
 from psycopg2.extras import DateTimeRange as Range
-from sqlalchemy import CheckConstraint, PrimaryKeyConstraint
-from sqlalchemy.dialects.postgresql import ExcludeConstraint
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Integer, String
 from testfixtures import ShouldRaise, compare
 
-from mortar_mixins.common import Common
-from mortar_mixins.temporal import Temporal
+
+@pytest.fixture
+def base():
+    return declarative_base()
 
 
 class Helper(object):
@@ -386,6 +389,49 @@ class TestExcludeConstraintConstruction(Helper, TestCase):
         self.session.add(self.Booking(
                 hotel='h1', room=1, period=Range(None, dt(2001, 1, 2))
                 ))
+
+
+class TestValueColumnGuessing(object):
+
+    def test_no_key_columns(self, base):
+        class Booking(Temporal, Common, base):
+            hotel = Column(String)
+            room = Column(Integer)
+        compare(Booking.value_columns, expected=None)
+        with ShouldRaise(TypeError):
+            Booking().value_tuple
+
+    def test_value_column(self, base):
+        class Symbol(Temporal, Common, base):
+            key_columns = ['type']
+            type = Column(String)
+            value = Column(Integer)
+        compare(Symbol.value_columns, expected=['value'])
+        compare(Symbol(type='foo', value='bar').value_tuple,
+                expected=('bar',), strict=True)
+
+    def test_multiple_value_columns(self, base):
+        class It(Temporal, Common, base):
+            key_columns = ['key']
+            key = Column(String)
+            a = Column(Integer)
+            b = Column(Integer)
+        compare(It.value_columns, expected=['a', 'b'])
+        compare(It(key='kv', a='av', b='bv').value_tuple,
+                expected=('av', 'bv'), strict=True)
+
+    def test_explicit_value_tuple(self, base):
+        class It(Temporal, Common, base):
+            key = Column(String)
+            a = Column(Integer)
+            b = Column(Integer)
+
+            @property
+            def value_tuple(self):
+                return self.a
+        compare(It.value_columns, expected=None)
+        compare(It(key='kv', a='av', b='bv').value_tuple,
+                expected='av', strict=True)
 
 
 class MethodTests(Helper, TestCase):
