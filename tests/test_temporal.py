@@ -593,7 +593,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
 
     def test_first_single_existing_starts_before_multiple(self):
         # existing:        |-(o1)-|-(o2)->
-        #      new:  |(n)--|-(o1)-|-(o2)->
+        #      new:  |(n)---------------->
         #   stored:  |(n)--|-(o1)-|-(o2)->
         self.session.add_all((
             self.Model(key='k', value='o1',
