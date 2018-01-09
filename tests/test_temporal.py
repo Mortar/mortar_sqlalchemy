@@ -1194,6 +1194,28 @@ class TestNoCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
              "key='k' from 1999-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o1 to n")
         )
+
+    def test_overlap_with_gap_open(self):
+        # existing:  |-(o1)-| |-(o2)-|
+        #      new:  |-(n)----------->
+        #   stored:  |-(n)--| |-(o2)-|
+        self.session.add_all((
+            self.Model(key='k', value='o1',
+                       value_from=dt(2000, 1, 1), value_to=dt(2001, 1, 1)),
+            self.Model(key='k', value='o2',
+                       value_from=dt(2002, 1, 1), value_to=dt(2003, 1, 1)),
+        ))
+        m = self.Model(key='k', value='n',
+                       value_from=dt(2000, 1, 1))
+        m.set_for_period(self.session, coalesce=False)
+        self.check(
+            ('k', 'n', dt(2000, 1, 1), dt(2001, 1, 1)),
+            ('k', 'o2', dt(2002, 1, 1), dt(2003, 1, 1)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'WARNING',
+             "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
+             "changed from o1 to n")
         )
 
 class TestSetForPeriodMultiValue(Helper, TestCase):

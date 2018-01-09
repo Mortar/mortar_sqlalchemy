@@ -257,7 +257,7 @@ class Temporal(object):
                         existing.value_from = self_to
                 elif self.starts_at(existing):
                     if self_to is None and not last:
-                        self.value_to = self_to = next_existing.value_from
+                        self.value_to = self_to = existing.value_to
                     if self.period == existing.period:
                         if self.value_tuple == existing.value_tuple:
                             log_unchanged()
