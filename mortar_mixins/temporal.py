@@ -232,7 +232,11 @@ class Temporal(object):
         self_from = self.value_from
         self_to = self.value_to
 
-        for existing, next_existing in pairwise(self.overlaps(session)):
+        overlapping = self.overlaps(session)
+        if self_to is None:
+            overlapping = overlapping.limit(2)
+
+        for existing, next_existing in pairwise(overlapping):
             last = next_existing is None
 
             existing_from = existing.value_from
