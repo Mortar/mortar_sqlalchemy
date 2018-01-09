@@ -17,11 +17,14 @@ logger = getLogger(__name__)
 unset = object()
 
 
-def pairwise(iterable):
+def _windowed(iterable):
     a, b = tee(iterable)
     next(b, None)
+    is_first = True
     for (x, y) in zip_longest(a, b):
-        yield x, y
+        is_last = y is None
+        yield x, is_first, is_last
+        is_first = False
 
 
 def latest_ending(x, other):
@@ -227,7 +230,6 @@ class Temporal(object):
                        self.period_str(),
                        self.pretty_value)
 
-        first = True
         create = True
         existing = None
         self_from = self.value_from
@@ -237,14 +239,12 @@ class Temporal(object):
         if self_to is None:
             overlapping = overlapping.limit(2)
 
-        for existing, next_existing in pairwise(overlapping):
-            last = next_existing is None
+        for existing, is_first, is_last in _windowed(overlapping):
 
             existing_from = existing.value_from
             existing_to = existing.value_to
 
-            if first:
-                first = False
+            if is_first:
 
                 if self.starts_before(existing):
                     if self.value_to is None:
@@ -256,7 +256,7 @@ class Temporal(object):
                         log_changed_value(existing_from, self_to)
                         existing.value_from = self_to
                 elif self.starts_at(existing):
-                    if self_to is None and not last:
+                    if self_to is None and not is_last:
                         self.value_to = self_to = existing.value_to
                     if self.period == existing.period:
                         if self.value_tuple == existing.value_tuple:
@@ -279,7 +279,7 @@ class Temporal(object):
                         log_set(self_from, self_to)
                     else:
                         log_changed_value(self_from, existing_to)
-                        if last:
+                        if is_last:
                             log_set(existing_to, self_to)
                     existing.value_to = self_from
 
@@ -288,7 +288,7 @@ class Temporal(object):
                 self.value_to = existing_from
                 break
 
-            elif last:
+            elif is_last:
 
                 if self.ends_at(existing):
                     log_changed_value(existing_from, existing_to)
