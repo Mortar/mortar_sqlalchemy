@@ -228,6 +228,7 @@ class Temporal(object):
                        self.pretty_value)
 
         first = True
+        create = True
         existing = None
         self_from = self.value_from
         self_to = self.value_to
@@ -255,21 +256,24 @@ class Temporal(object):
                         log_changed_value(existing_from, self_to)
                         existing.value_from = self_to
                 elif self.starts_at(existing):
-                    session.delete(existing)
-                    session.flush()
                     if self_to is None and not last:
                         self.value_to = self_to = next_existing.value_from
                     if self.period == existing.period:
                         if self.value_tuple == existing.value_tuple:
                             log_unchanged()
+                            create = False
                         else:
                             log_changed_value(self_from, self_to)
+                            session.delete(existing)
+                            session.flush()
                         break
                     else:
                         if self.value_tuple == existing.value_tuple:
                             log_changed_period(self_from, self_to)
                         else:
                             log_changed_value(self_from, self_to)
+                        session.delete(existing)
+                        session.flush()
                 else:
                     if existing_to is None:
                         log_set(self_from, self_to)
@@ -305,9 +309,10 @@ class Temporal(object):
                 session.delete(existing)
                 session.flush()
 
-        session.add(self)
-        if existing is None:
-            log_set(self_from, self_to)
+        if create:
+            session.add(self)
+            if existing is None:
+                log_set(self_from, self_to)
 
 
 def add_constraints_and_attributes(mapper, class_):
