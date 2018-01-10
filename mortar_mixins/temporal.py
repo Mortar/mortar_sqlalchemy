@@ -227,7 +227,7 @@ class Temporal(object):
             logger.log(unchanged_logging,
                        '%s from %s left at %s',
                        self.pretty_key,
-                       self.period_str(),
+                       period_str(self_from, self_to),
                        self.pretty_value)
 
         create = True
@@ -244,20 +244,36 @@ class Temporal(object):
             existing_from = existing.value_from
             existing_to = existing.value_to
 
+            if self_to is None and not is_last:
+                if self_from < existing_from:
+                    self_to = existing_from
+                    log_set(self_from, self_to)
+                elif self_from == existing_from:
+                    self_to = existing_to
+                    if self.value_tuple == existing.value_tuple:
+                        log_unchanged()
+                        create = False
+                    else:
+                        log_changed_value(self_from, self_to)
+                        session.delete(existing)
+                        session.flush()
+                else:
+                    self_to = existing_to
+                    log_changed_value(self_from, self_to)
+                    existing.value_to = self_from
+                self.value_to = self_to
+                break
+
             if is_first:
 
                 if self.starts_before(existing):
-                    if self.value_to is None:
-                        self.value_to = existing_from
-                        log_set(self_from, existing_from)
-                        break
+                    log_set(self_from, existing_from)
+                    if self_to is None:
+                        self.value_to = self_to = existing_from
                     else:
-                        log_set(self_from, existing_from)
                         log_changed_value(existing_from, self_to)
-                        existing.value_from = self_to
+                    existing.value_from = self_to
                 elif self.starts_at(existing):
-                    if self_to is None and not is_last:
-                        self.value_to = self_to = existing.value_to
                     if self.period == existing.period:
                         if self.value_tuple == existing.value_tuple:
                             log_unchanged()
@@ -266,7 +282,6 @@ class Temporal(object):
                             log_changed_value(self_from, self_to)
                             session.delete(existing)
                             session.flush()
-                        break
                     else:
                         if self.value_tuple == existing.value_tuple:
                             log_changed_period(self_from, self_to)
@@ -282,11 +297,6 @@ class Temporal(object):
                         if is_last:
                             log_set(existing_to, self_to)
                     existing.value_to = self_from
-
-            elif self_to is None:
-
-                self.value_to = existing_from
-                break
 
             elif is_last:
 
