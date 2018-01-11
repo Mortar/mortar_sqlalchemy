@@ -1,15 +1,16 @@
 from itertools import tee
-from logging import getLogger, WARNING, INFO, DEBUG, ERROR
+from logging import getLogger, WARNING, INFO, DEBUG
 
 from psycopg2.extras import DateTimeRange
-from sqlalchemy import Column, CheckConstraint, and_
+from sqlalchemy import Column, CheckConstraint
 from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import (
     ExcludeConstraint,
     TSRANGE as Range,
-    )
+)
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import has_inherited_table
+
 from .compat import zip_longest
 
 logger = getLogger(__name__)
@@ -27,21 +28,16 @@ def _windowed(iterable):
         is_first = False
 
 
-def latest_ending(x, other):
-    x_to = x.value_to
-    y_to = other.value_to
-    if x_to is None or y_to is None:
-        return None
-    return max(x_to, y_to)
+def starts_before(s_from, o_from):
+    return s_from is None or (o_from is not None and s_from < o_from)
 
 
-def _unchanged(log_level, existing):
-    logger.log(log_level,
-               '%s from %s left at %s',
-               existing.pretty_key,
-               existing.period_str(),
-               existing.pretty_value)
-    return False
+def ends_at_or_after(s_to, o_to):
+    return s_to is None or s_to == o_to or (o_to is not None and s_to > o_to)
+
+
+def ends_after(s_to, o_to):
+    return s_to is None or (o_to is not None and s_to > o_to)
 
 
 def period_str(value_from, value_to):
@@ -130,44 +126,6 @@ class Temporal(object):
         return ', '.join('%s=%r' % (k, getattr(self, k))
                          for k in self.value_columns)
 
-    def starts_before(self, other):
-        s_from = self.value_from
-        o_from = other.value_from
-        return s_from is None or (o_from is not None and s_from < o_from)
-
-    def starts_at(self, other):
-        return self.value_from == other.value_from
-
-    def starts_after(self, other):
-        s_from = self.value_from
-        o_from = other.value_from
-        return o_from is not None and (s_from is None or s_from < o_from)
-    #
-    # def starts_before_or_at(self, other):
-    #     s_from = self.value_from
-    #     o_from = other.value_from
-    #     return s_from is None or (o_from is not None and s_from <= o_from)
-
-    def ends_at(self, other):
-        return self.value_to == other.value_to
-
-    def ends_after(self, other):
-        s_to = self.value_to
-        o_to = other.value_to
-        return s_to is None or (o_to is not None and s_to > o_to)
-    #
-    # def period_contains(self, other):
-    #     return self.starts_before_or_at(other) and self.ends_after(other)
-    #
-    # def period_compatible_with(self, other):
-    #     s_from = self.value_from
-    #     o_from = other.value_from
-    #     s_to = self.value_to
-    #     o_to = other.value_to
-    #     return s_from == o_from and (
-    #         s_to is None or o_to is None or s_to == o_to
-    #     )
-
     def overlaps(self, session):
         model = type(self)
         return session.query(model).filter_by(
@@ -232,7 +190,7 @@ class Temporal(object):
 
         create = True
         existing = None
-        self_from = self.value_from
+        self_from = current_from = self.value_from
         self_to = self.value_to
 
         overlapping = self.overlaps(session)
@@ -264,60 +222,58 @@ class Temporal(object):
                 self.value_to = self_to
                 break
 
-            if is_first:
+            if starts_before(current_from, existing_from):
 
-                if self.starts_before(existing):
-                    log_set(self_from, existing_from)
-                    if self_to is None:
-                        self.value_to = self_to = existing_from
-                    else:
-                        log_changed_value(existing_from, self_to)
-                    existing.value_from = self_to
-                elif self.starts_at(existing):
-                    if self.period == existing.period:
-                        if self.value_tuple == existing.value_tuple:
-                            log_unchanged()
-                            create = False
-                        else:
-                            log_changed_value(self_from, self_to)
-                            session.delete(existing)
-                            session.flush()
-                    else:
-                        if self.value_tuple == existing.value_tuple:
-                            log_changed_period(self_from, self_to)
-                        else:
-                            log_changed_value(self_from, self_to)
+                log_set(current_from, existing_from)
+                if self_to is None:
+                    self.value_to = self_to = existing_from
+                else:
+                    if ends_at_or_after(self_to, existing_to):
+                        log_changed_value(existing_from, existing_to)
                         session.delete(existing)
                         session.flush()
-                else:
-                    if existing_to is None:
-                        log_set(self_from, self_to)
                     else:
-                        log_changed_value(self_from, existing_to)
-                        if is_last:
+                        log_changed_value(existing_from, self_to)
+                        existing.value_from = self_to
+
+            elif current_from == existing_from:
+
+                if self_to == existing_to:
+                    if self.value_tuple == existing.value_tuple:
+                        log_unchanged()
+                    else:
+                        log_changed_value(existing_from, self_to)
+                elif is_last:
+                    if self.value_tuple == existing.value_tuple:
+                        log_changed_period(existing_from, self_to)
+                    else:
+                        if ends_after(self_to, existing_to):
+                            log_changed_value(existing_from, existing_to)
                             log_set(existing_to, self_to)
-                    existing.value_to = self_from
-
-            elif is_last:
-
-                if self.ends_at(existing):
-                    log_changed_value(existing_from, existing_to)
-                    session.delete(existing)
-                    session.flush()
-                elif self.ends_after(existing):
-                    log_changed_value(existing_from, existing_to)
-                    log_set(existing_to, self_to)
-                    session.delete(existing)
-                    session.flush()
+                        else:
+                            log_changed_value(existing_from, self_to)
                 else:
-                    log_changed_value(existing_from, self_to)
+                    log_changed_value(existing_from, existing_to)
+
+                if self_from != current_from  and ends_after(existing_to, self_to):
                     existing.value_from = self_to
+                else:
+
+                    session.delete(existing)
+                    session.flush()
 
             else:
 
-                log_changed_value(existing_from, existing_to)
-                session.delete(existing)
-                session.flush()
+                if existing_to is None:
+                    log_set(self_from, self_to)
+                elif is_last and ends_after(self_to, existing_to):
+                    log_changed_value(self_from, existing_to)
+                    log_set(existing_to, self_to)
+                else:
+                    log_changed_value(self_from, existing_to)
+                existing.value_to = self_from
+
+            current_from = existing_to
 
         if create:
             session.add(self)
