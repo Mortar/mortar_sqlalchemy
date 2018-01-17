@@ -233,7 +233,7 @@ class Temporal(object):
                 current_from = existing_to
                 continue
 
-            if self_to is None and not is_last:
+            if self_to is None and (current_starts_before or not is_last):
                 if starts_before(self_from, existing_from):
                     self_to = existing_from
                     if ends_after(self_to, current_from):
@@ -257,16 +257,13 @@ class Temporal(object):
             if current_starts_before:
 
                 log_set(current_from, existing_from)
-                if self_to is None:
-                    self.value_to = self_to = existing_from
+                if ends_at_or_after(self_to, existing_to):
+                    log_changed_value(existing_from, existing_to)
+                    session.delete(existing)
+                    session.flush()
                 else:
-                    if ends_at_or_after(self_to, existing_to):
-                        log_changed_value(existing_from, existing_to)
-                        session.delete(existing)
-                        session.flush()
-                    else:
-                        log_changed_value(existing_from, self_to)
-                        existing.value_from = self_to
+                    log_changed_value(existing_from, self_to)
+                    existing.value_from = self_to
 
             elif current_from == existing_from:
 
