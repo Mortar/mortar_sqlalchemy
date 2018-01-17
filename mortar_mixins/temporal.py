@@ -269,22 +269,17 @@ class Temporal(object):
                     session.delete(existing)
                     session.flush()
 
-                if self_to == existing_to:
-                    if self.value_tuple == existing.value_tuple:
+                if self.value_tuple == existing.value_tuple:
+                    if self_to == existing_to:
                         log_unchanged()
                     else:
-                        log_changed_value(existing_from, self_to)
-                elif is_last:
-                    if self.value_tuple == existing.value_tuple:
                         log_changed_period(existing_from, self_to)
                         existing_to = self_to
-                    else:
-                        if ends_after(self_to, existing_to):
-                            log_changed_value(existing_from, existing_to)
-                        else:
-                            log_changed_value(existing_from, self_to)
                 else:
-                    log_changed_value(existing_from, existing_to)
+                    if ends_after(self_to, existing_to):
+                        log_changed_value(existing_from, existing_to)
+                    else:
+                        log_changed_value(existing_from, self_to)
 
             else:
 
