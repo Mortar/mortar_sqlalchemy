@@ -209,19 +209,19 @@ class Temporal(object):
 
             existing_from = existing.value_from
             existing_to = existing.value_to
+            current_starts_before = starts_before(current_from, existing_from)
 
             if (
                 coalesce and
                 self_from != existing_from and
                 self.value_tuple == existing.value_tuple
             ):
-                curr_starts_before = starts_before(current_from, existing_from)
                 self_ends_after = ends_after(self_to, existing_to)
-                if curr_starts_before:
+                if current_starts_before:
                     log_set(current_from, existing_from)
                 if self_ends_after and is_last:
                     log_set(existing_to, self_to)
-                if curr_starts_before or self_ends_after:
+                if current_starts_before or self_ends_after:
                     self_from = earliest(self_from, existing_from)
                     self.value_from = self_from
                     self.value_to = latest(self_to, existing_to)
@@ -254,7 +254,7 @@ class Temporal(object):
                 self.value_to = self_to
                 break
 
-            if starts_before(current_from, existing_from):
+            if current_starts_before:
 
                 log_set(current_from, existing_from)
                 if self_to is None:
