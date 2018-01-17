@@ -554,6 +554,295 @@ class SetForPeriodSetup(Helper):
             )])
 
 
+class TestCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
+
+    def test_simple(self):
+        # existing:
+        #      new:  |(n)---->
+        #   stored:  |(n)---->
+        m = self.Model(key='k', value='n', value_from=dt(2001, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'n', dt(2001, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 onwards set to n")
+        )
+
+    def test_change(self):
+        # existing:  |(o)-------->
+        #      new:        |-(n)->
+        #   stored:  |(o)--|-(n)->
+        self.session.add(
+            self.Model(key='k', value='o', value_from=dt(2001, 1, 1))
+        )
+        m = self.Model(key='k', value='n', value_from=dt(2002, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'o', dt(2001, 1, 1), dt(2002, 1, 1)),
+            ('k', 'n', dt(2002, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2002-01-01 00:00:00 onwards set to n")
+        )
+
+    def test_start_earlier(self):
+        # existing:        |-(v)->
+        #      new:  |(v)-------->
+        #   stored:  |(v)-------->
+        self.session.add(
+            self.Model(key='k', value='v', value_from=dt(2002, 1, 1))
+        )
+        m = self.Model(key='k', value='v', value_from=dt(2001, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 set to v")
+        )
+
+    def test_multiple_open(self):
+        # existing:        |-(v)--|-(v)--|
+        #      new:  |(v)---------------->
+        #   stored:  |(v)---------------->
+        self.session.add_all((
+            self.Model(key='k', value='v',
+                       value_from=dt(2002, 1, 1), value_to=dt(2003, 1, 1)),
+            self.Model(key='k', value='v',
+                       value_from=dt(2003, 1, 1), value_to=dt(2004, 1, 1)),
+        ))
+        m = self.Model(key='k', value='v', value_from=dt(2001, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "set to v"),
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2004-01-01 00:00:00 onwards "
+             "set to v",),
+        )
+
+    def test_multiple_open_gaps(self):
+        # existing:        |-(v)--|  |-(v)-->
+        #      new:  |(v)------------------->
+        #   stored:  |(v)------------------->
+        self.session.add_all((
+            self.Model(key='k', value='v',
+                       value_from=dt(2002, 1, 1), value_to=dt(2003, 1, 1)),
+            self.Model(key='k', value='v',
+                       value_from=dt(2004, 1, 1), value_to=None),
+        ))
+        m = self.Model(key='k', value='v', value_from=dt(2001, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "set to v"),
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2003-01-01 00:00:00 to 2004-01-01 00:00:00 "
+             "set to v"),
+        )
+
+    def test_multiple_closed(self):
+        # existing:        |-(v)-|-(v)-|
+        #      new:  |(v)-------------------|
+        #   stored:  |(v)-------------------|
+        self.session.add_all((
+            self.Model(key='k', value='v',
+                       value_from=dt(2002, 1, 1), value_to=dt(2003, 1, 1)),
+            self.Model(key='k', value='v',
+                       value_from=dt(2003, 1, 1), value_to=dt(2004, 1, 1)),
+        ))
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=dt(2005, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), dt(2005, 1, 1)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "set to v"),
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2004-01-01 00:00:00 to 2005-01-01 00:00:00 "
+             "set to v"),
+        )
+
+    def test_multiple_open_not_same(self):
+        # existing:    |-(v)->|-(o)->|-(v)->|
+        #      new:  |(v)-------------------->
+        #   stored:  |(v)-----|-(o)->|-(v)->|
+        self.session.add_all((
+            self.Model(key='k', value='v',
+                       value_from=dt(2002, 1, 1), value_to=dt(2003, 1, 1)),
+            self.Model(key='k', value='o',
+                       value_from=dt(2003, 1, 1), value_to=dt(2004, 1, 1)),
+            self.Model(key='k', value='v',
+                       value_from=dt(2004, 1, 1), value_to=dt(2005, 1, 1)),
+        ))
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=None)
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), dt(2003, 1, 1)),
+            ('k', 'o', dt(2003, 1, 1), dt(2004, 1, 1)),
+            ('k', 'v', dt(2004, 1, 1), dt(2005, 1, 1)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 set to v")
+        )
+
+    def test_multiple_closed_not_same(self):
+        # existing:    |-(v)->|-(o)->|-(v)->|
+        #      new:  |(v)---------------------|
+        #   stored:  |(v)---------------------|
+        self.session.add_all((
+            self.Model(key='k', value='v',
+                       value_from=dt(2002, 1, 1), value_to=dt(2003, 1, 1)),
+            self.Model(key='k', value='o',
+                       value_from=dt(2003, 1, 1), value_to=dt(2004, 1, 1)),
+            self.Model(key='k', value='v',
+                       value_from=dt(2004, 1, 1), value_to=dt(2005, 1, 1)),
+        ))
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=dt(2006, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), dt(2006, 1, 1)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal',
+             'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "set to v"),
+            ('mortar_mixins.temporal',
+             'WARNING',
+             "key='k' from 2003-01-01 00:00:00 to 2004-01-01 00:00:00 "
+             "changed from o to v"),
+            ('mortar_mixins.temporal',
+             'INFO',
+             "key='k' from 2005-01-01 00:00:00 to 2006-01-01 00:00:00 "
+             "set to v")
+        )
+
+    def test_no_change(self):
+        # existing:  |(v)-------->
+        #      new:        |-(v)->
+        #   stored:  |(v)-------->
+        self.session.add(
+            self.Model(key='k', value='v', value_from=dt(2001, 1, 1))
+        )
+        m = self.Model(key='k', value='v', value_from=dt(2002, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'DEBUG',
+             "key='k' from 2002-01-01 00:00:00 onwards left at v")
+        )
+
+    def test_change_past(self):
+        # existing:       |--(o)->
+        #      new:  |(n)--|
+        #   stored:  |(n)--|(o)-->
+        self.session.add(
+            self.Model(key='k', value='o',
+                       value_from=dt(2002, 1, 1))
+        )
+        m = self.Model(key='k', value='n',
+                       value_from=dt(2001, 1, 1), value_to=dt(2003, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'n', dt(2001, 1, 1), dt(2003, 1, 1)),
+            ('k', 'o', dt(2003, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "set to n"),
+            ('mortar_mixins.temporal', 'WARNING',
+             "key='k' from 2002-01-01 00:00:00 to 2003-01-01 00:00:00 "
+             "changed from o to n"),
+        )
+
+    def test_set_period_end(self):
+        # existing:  |(v)-------->
+        #      new:  |-(v)-|
+        #   stored:  |-(v)-|
+        self.session.add(
+            self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=None))
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=dt(2002, 1, 1))
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), dt(2002, 1, 1)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' changed period "
+             "from 2001-01-01 00:00:00 onwards "
+             "to 2001-01-01 00:00:00 to 2002-01-01 00:00:00")
+        )
+
+    def test_clear_period_end(self):
+        # existing:  |-(v)-|
+        #      new:  |-(v)------->
+        #   stored:  |-(v)------->
+        self.session.add(
+            self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=dt(2002, 1, 1))
+        )
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=None)
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), None),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' changed period "
+             "from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "to 2001-01-01 00:00:00 onwards")
+        )
+
+    def test_open_ended_left(self):
+        # existing:  <-(o1)----|  |-(o2)-|
+        #      new:         |-(v)-------->
+        #   stored:  <-(o1)-|-(v)-|-(o2)-|
+        self.session.add_all((
+            self.Model(key='k', value='o1',
+                       value_from=None, value_to=dt(2002, 1, 1)),
+            self.Model(key='k', value='o2',
+                       value_from=dt(2003, 1, 1), value_to=dt(2004, 1, 1)),
+        ))
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2001, 1, 1), value_to=None)
+        m.set_for_period(self.session)
+        self.check(
+            ('k', 'v', dt(2001, 1, 1), dt(2002, 1, 1)),
+            ('k', 'o2', dt(2003, 1, 1), dt(2004, 1, 1)),
+            ('k', 'o1', None, dt(2001, 1, 1)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'WARNING',
+             "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
+             "changed from o1 to v")
+        )
+
+
 class TestNoCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
 
     def test_simple(self):

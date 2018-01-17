@@ -37,7 +37,15 @@ def ends_at_or_after(s_to, o_to):
 
 
 def ends_after(s_to, o_to):
-    return s_to is None or (o_to is not None and s_to > o_to)
+    return o_to is not None and (s_to is None or s_to > o_to)
+
+
+def earliest(x, y):
+    return None if (x is None or y is None) else min(x, y)
+
+
+def latest(x, y):
+    return None if (x is None or y is None) else max(x, y)
 
 
 def period_str(value_from, value_to):
@@ -194,7 +202,7 @@ class Temporal(object):
         self_to = self.value_to
 
         overlapping = self.overlaps(session)
-        if self_to is None:
+        if self_to is None and not coalesce:
             overlapping = overlapping.limit(2)
 
         for existing, is_first, is_last in _windowed(overlapping):
@@ -202,10 +210,34 @@ class Temporal(object):
             existing_from = existing.value_from
             existing_to = existing.value_to
 
+            if (
+                coalesce and
+                self_from != existing_from and
+                self.value_tuple == existing.value_tuple
+            ):
+                curr_starts_before = starts_before(current_from, existing_from)
+                self_ends_after = ends_after(self_to, existing_to)
+                if curr_starts_before:
+                    log_set(current_from, existing_from)
+                if self_ends_after and is_last:
+                    log_set(existing_to, self_to)
+                if curr_starts_before or self_ends_after:
+                    self_from = earliest(self_from, existing_from)
+                    self.value_from = self_from
+                    self.value_to = latest(self_to, existing_to)
+                    session.delete(existing)
+                    session.flush()
+                else:
+                    log_unchanged()
+                    create = False
+                current_from = existing_to
+                continue
+
             if self_to is None and not is_last:
-                if self_from < existing_from:
+                if starts_before(self_from, existing_from):
                     self_to = existing_from
-                    log_set(self_from, self_to)
+                    if ends_after(self_to, current_from):
+                        log_set(current_from, self_to)
                 elif self_from == existing_from:
                     self_to = existing_to
                     if self.value_tuple == existing.value_tuple:
