@@ -210,14 +210,15 @@ class Temporal(object):
             existing_to = existing.value_to
             current_starts_before = starts_before(current_from, existing_from)
 
+            if current_starts_before:
+                log_set(current_from, existing_from)
+
             if (
                 coalesce and
                 self_from != existing_from and
                 self.value_tuple == existing.value_tuple
             ):
                 self_ends_after = ends_after(self_to, existing_to)
-                if current_starts_before:
-                    log_set(current_from, existing_from)
                 if current_starts_before or self_ends_after:
                     self_from = earliest(self_from, existing_from)
                     self.value_from = self_from
@@ -233,8 +234,6 @@ class Temporal(object):
             if self_to is None and (current_starts_before or not is_last):
                 if starts_before(self_from, existing_from):
                     self_to = existing_from
-                    if ends_after(self_to, current_from):
-                        log_set(current_from, self_to)
                 elif self_from == existing_from:
                     self_to = existing_to
                     if self.value_tuple == existing.value_tuple:
@@ -254,7 +253,6 @@ class Temporal(object):
 
             if current_starts_before:
 
-                log_set(current_from, existing_from)
                 if ends_at_or_after(self_to, existing_to):
                     log_changed_value(existing_from, existing_to)
                     session.delete(existing)
