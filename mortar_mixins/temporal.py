@@ -197,7 +197,6 @@ class Temporal(object):
                        self.pretty_value)
 
         create = True
-        existing = None
         self_from = current_from = self.value_from
         self_to = self.value_to
 
@@ -219,8 +218,6 @@ class Temporal(object):
                 self_ends_after = ends_after(self_to, existing_to)
                 if current_starts_before:
                     log_set(current_from, existing_from)
-                if self_ends_after and is_last:
-                    log_set(existing_to, self_to)
                 if current_starts_before or self_ends_after:
                     self_from = earliest(self_from, existing_from)
                     self.value_from = self_from
@@ -252,6 +249,7 @@ class Temporal(object):
                     log_changed_value(self_from, self_to)
                     existing.value_to = self_from
                 self.value_to = self_to
+                current_from = self_to
                 break
 
             if current_starts_before:
@@ -267,6 +265,12 @@ class Temporal(object):
 
             elif current_from == existing_from:
 
+                if self_from != current_from and ends_after(existing_to, self_to):
+                    existing.value_from = self_to
+                else:
+                    session.delete(existing)
+                    session.flush()
+
                 if self_to == existing_to:
                     if self.value_tuple == existing.value_tuple:
                         log_unchanged()
@@ -275,39 +279,30 @@ class Temporal(object):
                 elif is_last:
                     if self.value_tuple == existing.value_tuple:
                         log_changed_period(existing_from, self_to)
+                        existing_to = self_to
                     else:
                         if ends_after(self_to, existing_to):
                             log_changed_value(existing_from, existing_to)
-                            log_set(existing_to, self_to)
                         else:
                             log_changed_value(existing_from, self_to)
                 else:
                     log_changed_value(existing_from, existing_to)
 
-                if self_from != current_from  and ends_after(existing_to, self_to):
-                    existing.value_from = self_to
-                else:
-
-                    session.delete(existing)
-                    session.flush()
-
             else:
 
                 if existing_to is None:
                     log_set(self_from, self_to)
-                elif is_last and ends_after(self_to, existing_to):
-                    log_changed_value(self_from, existing_to)
-                    log_set(existing_to, self_to)
                 else:
                     log_changed_value(self_from, existing_to)
                 existing.value_to = self_from
 
             current_from = existing_to
 
+        if ends_after(self_to, current_from):
+            log_set(current_from, self_to)
+
         if create:
             session.add(self)
-            if existing is None:
-                log_set(self_from, self_to)
 
 
 def add_constraints_and_attributes(mapper, class_):
