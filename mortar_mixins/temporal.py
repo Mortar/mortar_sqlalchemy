@@ -169,32 +169,36 @@ class Temporal(object):
 
         def log_set(value_from, value_to):
             logger.log(set_logging,
-                       '%s from %s set to %s',
+                       '%s from %s set to %s' % (
                        self.pretty_key,
                        period_str(value_from, value_to),
-                       self.pretty_value)
+                       self.pretty_value
+                       ))
 
         def log_changed_value(value_from, value_to):
             logger.log(change_logging,
-                       '%s from %s changed from %s to %s',
+                       '%s from %s changed from %s to %s' % (
                        self.pretty_key,
                        period_str(value_from, value_to),
                        existing.pretty_value,
-                       self.pretty_value)
+                       self.pretty_value
+                       ))
 
         def log_changed_period(value_from, value_to):
             logger.log(set_logging,
-                       '%s changed period from %s to %s',
+                       '%s changed period from %s to %s' % (
                        self.pretty_key,
                        existing.period_str(),
-                       period_str(value_from, value_to))
+                       period_str(value_from, value_to)
+                       ))
 
         def log_unchanged():
             logger.log(unchanged_logging,
-                       '%s from %s left at %s',
+                       '%s from %s left at %s' % (
                        self.pretty_key,
                        period_str(self_from, self_to),
-                       self.pretty_value)
+                       self.pretty_value
+                       ))
 
         create = True
         self_from = current_from = self.value_from
