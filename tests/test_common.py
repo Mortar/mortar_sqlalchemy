@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship, joinedload
 from mortar_mixins.common import Common
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from testfixtures import compare
+from testfixtures import compare, ShouldAssert
 from mortar_rdb import get_session
 from mortar_rdb.testing import register_session
 
@@ -86,18 +86,8 @@ class CommonTests(SetupModels, TestCase):
 class CompareTests(SetupModels, TestCase):
 
     def check_raises(self, x, y, message, **kw):
-        try:
+        with ShouldAssert(message):
             compare(x, y, **kw)
-        except Exception as e:
-            if not isinstance(e, AssertionError):
-                raise # pragma: no cover
-            actual = e.args[0]
-            if actual != message: # pragma: no cover
-                self.fail(compare(actual, expected=message,
-                                  show_whitespace=True,
-                                  raises=False))
-        else: # pragma: no cover
-            self.fail('No exception raised!')
 
     def test_identical(self):
         compare(
@@ -158,7 +148,11 @@ class CompareTests(SetupModels, TestCase):
             "\n"
             "values differ:\n"
             "'attr': None != 6\n"
-            "'other_id': 1 != None"
+            "'other_id': 1 != None\n"
+            '\n'
+            "While comparing ['attr']: None != 6\n"
+            '\n'
+            "While comparing ['other_id']: 1 != None"
         )
 
     def test_backref_equal(self):
