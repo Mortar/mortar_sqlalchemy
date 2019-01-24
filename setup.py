@@ -30,7 +30,7 @@ setup(
     install_requires = (
         'mortar_rdb',
         'SQLAlchemy',
-        'psycopg2',
+        'psycopg2-binary',
         ),
     extras_require=dict(
         test=['pytest', 'coverage','testfixtures', 'coveralls'],
