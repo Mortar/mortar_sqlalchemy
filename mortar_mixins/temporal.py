@@ -289,9 +289,13 @@ class Temporal(object):
 
                 if existing_to is None:
                     log_set(self_from, self_to)
+                    existing.value_to = self_from
+                elif self.value_tuple == existing.value_tuple:
+                    log_changed_period(current_from, existing_to)
+                    existing.value_from = current_from
                 else:
                     log_changed_value(self_from, existing_to)
-                existing.value_to = self_from
+                    existing.value_to = self_from
 
             current_from = existing_to
 

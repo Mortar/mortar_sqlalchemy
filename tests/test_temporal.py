@@ -1532,6 +1532,32 @@ class TestNoCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
              "changed from o2 to n"),
         )
 
+    def test_explicit_change_value_period(self):
+        # existing:  |-(v)--|--(v)--|
+        #      new:  |-(v)----|
+        #   stored:  |-(v)----|-(v)-|
+        self.session.add_all((
+            self.Model(key='k', value='v',
+                       value_from=dt(2010, 4, 28, 0, 0), value_to=dt(2010, 4, 28, 12, 0)),
+            self.Model(key='k', value='v',
+                       value_from=dt(2010, 4, 28, 12, 0), value_to=dt(2010, 4, 29, 12, 0)),
+        ))
+        self.session.flush()
+        m = self.Model(key='k', value='v',
+                       value_from=dt(2010, 4, 28, 0, 0), value_to=dt(2010, 4, 29, 0, 0))
+        m.set_for_period(self.session, coalesce=False)
+        self.check(
+            ('k', 'v', dt(2010, 4, 28, 0, 0), dt(2010, 4, 29, 0, 0)),
+            ('k', 'v', dt(2010, 4, 29, 0, 0), dt(2010, 4, 29, 12, 0)),
+        )
+        self.log.check(
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' changed period from 2010-04-28 00:00:00 to 2010-04-28 12:00:00 to "
+             '2010-04-28 00:00:00 to 2010-04-29 00:00:00'),
+            ('mortar_mixins.temporal', 'INFO',
+             "key='k' changed period from 2010-04-28 12:00:00 to 2010-04-29 12:00:00 to "
+             '2010-04-29 00:00:00 to 2010-04-29 12:00:00'),
+        )
 
 class TestSetForPeriodMultiValue(Helper, TestCase):
 
