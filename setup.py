@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 setup(
     name='mortar_mixins',
     author='Chris Withers',
-    version='2.3.3',
+    version='2.3.4',
     author_email='chris@withers.org',
     license='MIT',
     description="SQLAlchemy mixins for use with Postgres.",
@@ -30,7 +30,7 @@ setup(
     install_requires = (
         'mortar_rdb',
         'SQLAlchemy',
-        'psycopg2-binary',
+        'psycopg2',
         ),
     extras_require=dict(
         test=['pytest', 'coverage','testfixtures', 'coveralls'],
