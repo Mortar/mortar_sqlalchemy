@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2018 Chris Withers
+# Copyright (c) 2015-2019 Chris Withers
 # See LICENSE.txt for license details.
 
 import os
@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 setup(
     name='mortar_mixins',
     author='Chris Withers',
-    version='2.3.2',
+    version='2.3.3',
     author_email='chris@withers.org',
     license='MIT',
     description="SQLAlchemy mixins for use with Postgres.",
