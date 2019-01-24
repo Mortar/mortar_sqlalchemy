@@ -1,7 +1,9 @@
 language: python
 
-# for container-y googdness:
-sudo: false
+env:
+  global:
+    # travis encrypt COVERALLS_REPO_TOKEN=...
+    secure: "PDkXXb0fWo5Dt5ohs4frc+bIRGyIkf/ggzq2+fInopn8rMjTn5WHR2bK3Gd0fagpLH48T+kwGcI+W9Oww0FHAGkALoB/8H7xAlGwl8M1twGrZqFgRGK/Jx272BtycsNrxFSmIuHpyf4diSfyl4Kh9GpNfz+QBAyKbXqZJO6QsBi08+jRjDWHNtpKBvsvehee8CvcxU9RFPtngpSMvhHNG6CZWSfx9t0JMLyryatZ9cRkrrYA5zLNFc0C2kcMsQ8ErS1DelBHzpAIxLUeasvSQ9mbwTgFlWlqTdKpE/k4WjL511TpFKXh2wzDVC12R6H/hxMn1PoklNzZUeLY1eJHEP3iMQwdwZceuPPh1ufc87Pr6WTaPzHIsPXMzt9bBgrPZB8Z/0ewTvD6sKOiJrih0w5B3cg7v5UFkzOt3OXQMk1a9k5GdLbeZhn9Rza4iG3MalxoSh5I4Joa2iDLvIlZ7XBM2B+D0fsyawT0LNIg8PF7eLjxOaMNz1cWqc3qke1HqfX6UN8iGH4t9Z8mxP4Qvp+YAcLwfxre7kx/Rfc77FEE79Ze05VFvPq1CFs6z7ap5h8CsTdWAjR28KsSd5UxtOos33OxbVu7QbqrCC/9NrPjmxdtchlx01+zRGZVpl3YkOQTNLumAOBDOo8G+zPaLz0UuPolr9gzPv2XysG9FnQ="
 
 addons:
   postgresql: "9.2"
@@ -22,7 +24,7 @@ before_script:
 script: DB_URL=postgres://postgres@localhost/testdb coverage run -m pytest
 
 after_success:
-  - coveralls
+  - "COVERALLS_PARALLEL=true coveralls"
 
 jobs:
   include:
@@ -33,7 +35,7 @@ jobs:
       after_success: skip
 
       install: "pip install -U coveralls-check"
-      script: "coveralls-check $TRAVIS_COMMIT"
+      script: "coveralls-check $TRAVIS_COMMIT --parallel-build-number $TRAVIS_BUILD_NUMBER --repo-token $COVERALLS_REPO_TOKEN"
 
     - stage: release
       if: tag IS present
