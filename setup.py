@@ -28,12 +28,11 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires = (
-        'mortar_rdb',
         'SQLAlchemy',
         'psycopg2',
         ),
     extras_require=dict(
-        test=['pytest', 'coverage','testfixtures', 'coveralls'],
+        test=['pytest', 'coverage', 'mortar_rdb', 'testfixtures', 'coveralls'],
         build=['setuptools-git', 'wheel', 'twine']
         ),
     )
