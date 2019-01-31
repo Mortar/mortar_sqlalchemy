@@ -42,6 +42,9 @@ class Common(object):
                 return False
         return True
 
+    def __hash__(self):
+        return id(self)
+
     def __ne__(self, other):
         return not (self == other)
 

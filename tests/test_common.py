@@ -165,3 +165,10 @@ class CompareTests(SetupModels, TestCase):
 
     def test_ignore_fields(self):
         compare(self.Model(id=1), self.Model(id=2), ignore_fields=['id'])
+
+    def test_hashable(self):
+        o = self.Model(id=1)
+        mapping = {}
+        assert o not in mapping
+        mapping[o] = 1
+        assert mapping[o] == 1
