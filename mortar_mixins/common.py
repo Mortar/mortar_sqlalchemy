@@ -1,6 +1,5 @@
 import re
 from sqlalchemy import inspect
-from sqlalchemy.orm.state import AttributeState
 from sqlalchemy.util import classproperty
 
 name_re = re.compile('([a-z]|^)([A-Z])')
