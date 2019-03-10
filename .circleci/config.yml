@@ -1,0 +1,57 @@
+version: 2.1
+
+orbs:
+  python: cjw296/python-ci@1.1
+
+jobs:
+  run-tests:
+    parameters:
+      python:
+        type: string
+    docker:
+      - image: circleci/python:<< parameters.python >>
+        environment:
+          DB_URL: postgresql://postgres@localhost/circle_test
+      - image: circleci/postgres:11.2-alpine-ram
+    steps:
+      - python/pip-run-tests
+
+common: &common
+  jobs:
+    - run-tests:
+        name: python27-pg11
+        python: '2.7'
+    - run-tests:
+        name: python36-pg11
+        python: '3.6'
+    - run-tests:
+        name: python37-pg11
+        python: '3.7'
+
+    - python/coverage:
+        name: coverage
+        requires:
+          - python27-pg11
+          - python36-pg11
+          - python37-pg11
+
+    - python/release:
+        name: release
+        config: .carthorse.yml
+        requires:
+          - coverage
+        filters:
+          branches:
+            only: master
+
+workflows:
+  push:
+    <<: *common
+  periodic:
+    <<: *common
+    triggers:
+      - schedule:
+          cron: "0 0 * * 4"
+          filters:
+            branches:
+              only: master
