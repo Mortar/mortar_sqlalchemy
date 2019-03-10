@@ -32,7 +32,7 @@ setup(
         'psycopg2',
         ),
     extras_require=dict(
-        test=['pytest', 'coverage', 'mortar_rdb', 'testfixtures', 'coveralls'],
+        test=['pytest', 'pytest-cov', 'mortar_rdb', 'testfixtures', 'coveralls'],
         build=['setuptools-git', 'wheel', 'twine']
         ),
     )
