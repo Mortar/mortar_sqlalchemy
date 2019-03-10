@@ -1,10 +1,7 @@
-|Travis|_ |Coveralls|_
+|CircleCI|_
 
-.. |Travis| image:: https://api.travis-ci.org/Mortar/mortar_mixins.png?branch=master
-.. _Travis: https://travis-ci.org/Mortar/mortar_mixins
-
-.. |Coveralls| image:: https://coveralls.io/repos/Mortar/mortar_mixins/badge.png?branch=master
-.. _Coveralls: https://coveralls.io/r/Mortar/mortar_mixins?branch=master
+.. |CircleCI| image:: https://circleci.com/gh/Mortar/mortar_mixins/tree/master.svg?style=shield
+.. _CircleCI: https://circleci.com/gh/Mortar/mortar_mixins/tree/master
 
 mortar_mixins
 =============
