@@ -14,6 +14,7 @@ jobs:
           DB_URL: postgresql://postgres@localhost/circle_test
       - image: circleci/postgres:11.2-alpine-ram
     steps:
+      - run: "psql -d circle_test -c \"CREATE EXTENSION btree_gist;\" -U postgres"
       - python/pip-run-tests
 
 common: &common
