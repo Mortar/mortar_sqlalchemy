@@ -1,0 +1,79 @@
+version: 2.1
+
+orbs:
+  python: cjw296/python-ci@1.1
+
+jobs:
+  run-tests:
+    parameters:
+      python:
+        type: string
+      postgres:
+        type: string
+    docker:
+      - image: circleci/python:<< parameters.python >>
+        environment:
+          DB_URL: postgresql://postgres@localhost/circle_test
+      - image: circleci/postgres:<< parameters.postgres >>-alpine-ram
+    steps:
+      - run: "sudo apt install postgresql-client"
+      - run: "psql -d circle_test -c \"CREATE EXTENSION btree_gist;\" -h localhost -U postgres"
+      - python/pip-run-tests
+
+common: &common
+  jobs:
+    - run-tests:
+        name: python27-pg10
+        python: '2.7'
+        postgres: '10.7'
+    - run-tests:
+        name: python36-pg10
+        python: '3.6'
+        postgres: '10.7'
+    - run-tests:
+        name: python37-pg10
+        python: '3.7'
+        postgres: '10.7'
+    - run-tests:
+        name: python27-pg11
+        python: '2.7'
+        postgres: '11.2'
+    - run-tests:
+        name: python36-pg11
+        python: '3.6'
+        postgres: '11.2'
+    - run-tests:
+        name: python37-pg11
+        python: '3.7'
+        postgres: '11.2'
+
+    - python/coverage:
+        name: coverage
+        requires:
+          - python27-pg10
+          - python36-pg10
+          - python37-pg10
+          - python27-pg11
+          - python36-pg11
+          - python37-pg11
+
+    - python/release:
+        name: release
+        config: .carthorse.yml
+        requires:
+          - coverage
+        filters:
+          branches:
+            only: master
+
+workflows:
+  push:
+    <<: *common
+  periodic:
+    <<: *common
+    triggers:
+      - schedule:
+          cron: "0 0 * * 4"
+          filters:
+            branches:
+              only: master
