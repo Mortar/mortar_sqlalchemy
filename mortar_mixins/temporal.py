@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import (
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import has_inherited_table
 
-from .compat import zip_longest
+from itertools import zip_longest
 
 logger = getLogger(__name__)
 
