@@ -28,8 +28,8 @@ Get a clone of the git repo and then do the following::
 Releasing
 ---------
 
-To make a release, just update the version in ``setup.py``, tag it
+To make a release, just update the version in ``setup.py``
 and push to https://github.com/Mortar/mortar_mixins
-and Travis CI should take care of the rest.
+and Carthorse should take care of the rest.
 
 
