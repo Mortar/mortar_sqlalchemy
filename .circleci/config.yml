@@ -17,6 +17,7 @@ jobs:
       - image: cimg/postgres:<< parameters.postgres >>
     steps:
       - run: "sudo apt install postgresql-client"
+      - run: "pip install sockpuppet && sockpuppet wait -p 5432 --timeout 300"
       - run: "psql -d circle_test -c \"CREATE EXTENSION btree_gist;\" -h localhost -U postgres"
       - python/pip-run-tests
 
