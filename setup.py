@@ -20,7 +20,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
     ],
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
