@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  python: cjw296/python-ci@1.1
+  python: cjw296/python-ci@3
 
 jobs:
   run-tests:
@@ -11,10 +11,10 @@ jobs:
       postgres:
         type: string
     docker:
-      - image: circleci/python:<< parameters.python >>
+      - image: cimg/python:<< parameters.python >>
         environment:
           DB_URL: postgresql://postgres@localhost/circle_test
-      - image: circleci/postgres:<< parameters.postgres >>-alpine-ram
+      - image: cimg/postgres:<< parameters.postgres >>
     steps:
       - run: "sudo apt install postgresql-client"
       - run: "psql -d circle_test -c \"CREATE EXTENSION btree_gist;\" -h localhost -U postgres"
@@ -26,7 +26,7 @@ common: &common
         matrix:
           parameters:
             python: ['3.6', '3.8']
-            postgres: ["11.2"]
+            postgres: ["11.15"]
 
     - python/coverage:
         name: coverage
