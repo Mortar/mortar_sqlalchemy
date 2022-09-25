@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2019 Chris Withers
+# Copyright (c) 2015 onwards Chris Withers
 # See LICENSE.txt for license details.
 
 import os
@@ -24,13 +24,14 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     zip_safe=False,
-    install_requires = (
+    python_requires=">=3.7",
+    install_requires=(
         'SQLAlchemy',
         'psycopg2',
-        ),
+    ),
     extras_require=dict(
-        test=['pytest', 'pytest-cov', 'mortar_rdb', 'testfixtures', 'coveralls'],
+        test=['pytest', 'pytest-cov', 'mortar_rdb', 'testfixtures'],
         build=['setuptools-git', 'wheel', 'twine']
-        ),
-    )
+    ),
+)
 

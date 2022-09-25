@@ -23,7 +23,7 @@ Get a clone of the git repo and then do the following::
   sudo -u postgres psql -d testdb -c "CREATE EXTENSION btree_gist;"
 
   export DB_URL=postgres://testuser:testpassword@localhost:5432/testdb
-  bin/nosetests --with-cov --cov=mortar_mixins
+  pytest --cov
 
 Releasing
 ---------
