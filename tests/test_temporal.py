@@ -1,126 +1,115 @@
-from unittest import TestCase
+from datetime import datetime as dt
 
 import pytest
-from datetime import datetime as dt
-from mortar_mixins.common import Common
-from mortar_mixins.temporal import Temporal
-from mortar_rdb.testing import get_session, register_session
 from psycopg2.extras import DateTimeRange as Range
 from sqlalchemy.exc import DataError, IntegrityError
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Integer, String
 from testfixtures import ShouldRaise, compare, LogCapture
 
-
-@pytest.fixture
-def base():
-    return declarative_base()
-
-
-class Helper(object):
-
-    @classmethod
-    def setUpClass(cls):
-        register_session(transactional=False)
-
-    def setUp(self):
-        b = declarative_base()
-        class Model(Temporal, Common, b):
-            key_columns = ['name']
-            name = Column(String)
-        self.Model = Model
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        b.metadata.create_all(self.session.bind)
+from mortar_mixins.common import Common
+from mortar_mixins.temporal import Temporal
+from mortar_mixins.testing import create_tables_and_session
 
 
-class PropertyTests(Helper, TestCase):
+@pytest.fixture()
+def model(base):
+    class Model(Temporal, Common, base):
+        key_columns = ['name']
+        name = Column(String)
 
-    def setUp(self):
-        super(PropertyTests, self).setUp()
-        self.obj = self.Model(
-            name = 'test',
-            period = Range(dt(2000, 1, 1), dt(2001, 1, 1))
-            )
+    return Model
+
+
+class TestProperties:
+
+    @pytest.fixture()
+    def obj(self, model):
+        return model(
+            name='test',
+            period=Range(dt(2000, 1, 1), dt(2001, 1, 1))
+        )
         
-    def test_get_from(self):
-        compare(self.obj.value_from, dt(2000, 1, 1))
+    def test_get_from(self, obj):
+        compare(obj.value_from, dt(2000, 1, 1))
     
-    def test_set_from(self):
-        self.obj.value_from = dt(1999, 1, 1)
-        compare(self.obj.period,
+    def test_set_from(self, obj):
+        obj.value_from = dt(1999, 1, 1)
+        compare(obj.period,
                 Range(dt(1999, 1, 1), dt(2001, 1, 1)))
     
-    def test_set_from_none(self):
-        self.obj = self.Model()
-        self.obj.value_from = dt(1999, 1, 1)
-        compare(self.obj.period,
+    def test_set_from_none(self, model):
+        obj = model()
+        obj.value_from = dt(1999, 1, 1)
+        compare(obj.period,
                 Range(dt(1999, 1, 1), None))
     
-    def test_get_to(self):
-        compare(self.obj.value_to, dt(2001, 1, 1))
+    def test_get_to(self, obj):
+        compare(obj.value_to, dt(2001, 1, 1))
     
-    def test_set_to(self):
-        self.obj.value_to = dt(2002, 1, 1)
-        compare(self.obj.period,
+    def test_set_to(self, obj):
+        obj.value_to = dt(2002, 1, 1)
+        compare(obj.period,
                 Range(dt(2000, 1, 1), dt(2002, 1, 1)))
     
-    def test_set_to_none(self):
-        self.obj = self.Model()
-        self.obj.value_to = dt(1999, 1, 1)
-        compare(self.obj.period,
+    def test_set_to_none(self, model):
+        obj = model()
+        obj.value_to = dt(1999, 1, 1)
+        compare(obj.period,
                 Range(None, dt(1999, 1, 1)))
 
 
-class ConstructorTests(Helper, TestCase):
+class TestConstructor:
 
-    def test_from(self):
-        obj = self.Model(name = 'test', value_from = dt(2000, 1, 1))
+    def test_from(self, model):
+        obj = model(name = 'test', value_from = dt(2000, 1, 1))
         compare(obj.period, Range(dt(2000, 1, 1), None))
 
-    def test_to(self):
-        obj = self.Model(name = 'test', value_to = dt(2000, 1, 1))
+    def test_to(self, model):
+        obj = model(name = 'test', value_to = dt(2000, 1, 1))
         compare(obj.period, Range(None, dt(2000, 1, 1)))
 
-    def test_period_and_from(self):
+    def test_period_and_from(self, model):
         with ShouldRaise(TypeError(
                 'period not allowed if value_from or value_to used'
-                )):
-            self.Model(
+        )):
+            model(
                 name = 'test',
                 period = Range(dt(2000, 1, 1), dt(2001, 1, 1)),
                 value_from = dt(2000, 1, 1),
-                )
+            )
 
-    def test_period_and_to(self):
+    def test_period_and_to(self, model):
         with ShouldRaise(TypeError(
                 'period not allowed if value_from or value_to used'
-                )):
-            self.Model(
+        )):
+            model(
                 name = 'test',
                 period = Range(dt(2000, 1, 1), dt(2001, 1, 1)),
                 value_to = dt(2000, 1, 1),
-                )
+            )
 
 
-class ValueAtTests(Helper, TestCase):
+class TestValueAt:
 
-    def setUp(self):
-        super(ValueAtTests, self).setUp()
-        # some Models
-        self.session.add(self.Model(
-                period = Range(dt(2000, 1, 1), dt(2001, 1, 1)),
-                name = 'Name 1-1'
-                ))
-        self.session.add(self.Model(
-                period = Range(dt(2001, 1, 1), dt(2002, 1, 1)),
-                name = 'Name 1-2'
-                ))
-        self.session.add(self.Model(
-                period = Range(dt(2002, 1, 1), None),
-                name = 'Name 1-3'
-                ))
+    @pytest.fixture(autouse=True)
+    def objects(self, db, base, model):
+        with create_tables_and_session(db, base) as session:
+            session.add(model(
+                    period=Range(dt(2000, 1, 1), dt(2001, 1, 1)),
+                    name='Name 1-1'
+                    ))
+            session.add(model(
+                    period=Range(dt(2001, 1, 1), dt(2002, 1, 1)),
+                    name='Name 1-2'
+                    ))
+            session.add(model(
+                    period=Range(dt(2002, 1, 1), None),
+                    name='Name 1-3'
+                    ))
+            self.Model = model
+            self.session = session
+            yield
 
     def _check(self, dt, expected):
         objs = self.session.query(self.Model).filter(
@@ -143,27 +132,34 @@ class ValueAtTests(Helper, TestCase):
         self._check(dt(2002, 1, 1), ['Name 1-3'])
 
 
-class ConstraintTests(Helper, TestCase):
-    
-    def _check_valid(self, existing=(), new=(), exception=False):
+class TestConstraints:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, db, base, model):
+        self.Model = model
+        with create_tables_and_session(db, base) as session:
+            self.session = session
+            yield
+
+    def _check_valid(self, existing=(), new=(), exception=None):
         # both existing and new should be sequences of two-tuples
         # of the form (value_from,value_to)
         for value_from, value_to in existing:
             self.session.add(self.Model(
-                    period = Range(value_from, value_to),
-                    name = 'Name'
+                    period=Range(value_from, value_to),
+                    name='Name'
                     ))
 
         for value_from, value_to in new:
             self.session.add(self.Model(
-                    period = Range(value_from, value_to),
-                    name = 'Name'
+                    period=Range(value_from, value_to),
+                    name='Name'
                     ))
         if exception:
             with ShouldRaise(exception):
                 self.session.flush()
         else:
-                self.session.flush()
+            self.session.flush()
 
     def test_invalid_1(self):
         # existing:     |---->
@@ -354,44 +350,46 @@ class ConstraintTests(Helper, TestCase):
             self.session.flush()
 
 
-class TestExcludeConstraintConstruction(Helper, TestCase):
+class TestExcludeConstraintConstruction:
 
-    def setUp(self):
-        Base = declarative_base()
-        class Booking(Temporal, Common, Base):
+    @pytest.fixture()
+    def booking(self, base):
+        class Booking(Temporal, Common, base):
             key_columns = ('hotel', 'room')
-            hotel =  Column(String)
-            room =  Column(Integer)
-        self.Booking = Booking
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        Base.metadata.create_all(self.session.bind)
+            hotel = Column(String)
+            room = Column(Integer)
+        return Booking
 
-    def test_valid(self):
-        self.session.add(self.Booking(
+    @pytest.fixture()
+    def session(self, db, base, booking):
+        with create_tables_and_session(db, base) as session:
+            yield session
+
+    def test_valid(self, booking, session):
+        session.add(booking(
                 hotel='h1', room=1, period=Range(dt(2001, 1, 1),)
                 ))
-        self.session.add(self.Booking(
+        session.add(booking(
                 hotel='h1', room=2, period=Range(dt(2001, 1, 1),)
                 ))
-        self.session.add(self.Booking(
+        session.add(booking(
                 hotel='h2', room=1, period=Range(dt(2001, 1, 1),)
                 ))
-        self.session.add(self.Booking(
+        session.add(booking(
                 hotel='h2', room=2, period=Range(dt(2001, 1, 1),)
                 ))
-        self.session.flush()
+        session.flush()
 
-    def test_invalid(self):
-        self.session.add(self.Booking(
+    def test_invalid(self, booking, session):
+        session.add(booking(
                 hotel='h1', room=1, period=Range(dt(2001, 1, 1), None)
                 ))
-        self.session.add(self.Booking(
+        session.add(booking(
                 hotel='h1', room=1, period=Range(None, dt(2001, 1, 2))
                 ))
 
 
-class TestValueColumnGuessing(object):
+class TestValueColumnGuessing:
 
     def test_no_key_columns(self, base):
         class Booking(Temporal, Common, base):
@@ -434,60 +432,62 @@ class TestValueColumnGuessing(object):
                 expected='av', strict=True)
 
 
-class MethodTests(Helper, TestCase):
+class TestTemporalMethods:
 
-    def test_period_str_end(self):
-        compare(self.Model(value_to=dt(2001, 1, 1)).period_str(),
+    def test_period_str_end(self, model):
+        compare(model(value_to=dt(2001, 1, 1)).period_str(),
                 'until 2001-01-01 00:00:00')
     
-    def test_period_str_start(self):
-        compare(self.Model(value_from=dt(2001, 1, 1)).period_str(),
+    def test_period_str_start(self, model):
+        compare(model(value_from=dt(2001, 1, 1)).period_str(),
                 '2001-01-01 00:00:00 onwards')
     
-    def test_period_str_both(self):
-        compare(self.Model(
+    def test_period_str_both(self, model):
+        compare(model(
                 period=Range(dt(2000, 1, 1), dt(2001, 1, 1))
                 ).period_str(),
                 '2000-01-01 00:00:00 to 2001-01-01 00:00:00')
 
-    def test_period_str_both_with_time(self):
-        compare(self.Model(
+    def test_period_str_both_with_time(self, model):
+        compare(model(
                 period=Range(dt(2000, 1, 1, 16), dt(2001, 1, 1, 15))
                 ).period_str(),
                 '2000-01-01 16:00:00 to 2001-01-01 15:00:00')
 
-    def test_period_str_neither(self):
-        compare(self.Model().period_str(),
+    def test_period_str_neither(self, model):
+        compare(model().period_str(),
                 'unknown')
     
-    def test_period_both_none(self):
-        compare(self.Model(period=Range(None, None)).period_str(),
+    def test_period_both_none(self, model):
+        compare(model(period=Range(None, None)).period_str(),
                 'always')
 
 
-class TestNoKeyColumns(Helper, TestCase):
+class TestNoKeyColumns:
 
-    def setUp(self):
-        Base = declarative_base()
-        class NoKeys(Temporal, Common, Base):
+    @pytest.fixture()
+    def model(self, base):
+        class NoKeys(Temporal, Common, base):
             col = Column(String)
-        self.Model = NoKeys
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        Base.metadata.create_all(self.session.bind)
+        return NoKeys
 
-    def test_valid(self):
-        self.session.add(self.Model(col='a', period=Range(dt(2001, 1, 1))))
-        self.session.add(self.Model(col='b', period=Range(dt(2001, 1, 1))))
+    @pytest.fixture()
+    def session(self, db, base, model):
+        with create_tables_and_session(db, base) as session:
+            yield session
+
+    def test_invalid(self, model, session):
+        session.add(model(col='a', period=Range(dt(2001, 1, 1))))
+        session.add(model(col='b', period=Range(dt(2001, 1, 1))))
         # you get the helper methods, but no exclude constraint
-        self.session.flush()
+        session.flush()
 
 
-class TestSingleTableInheritance(Helper, TestCase):
+class TestSingleTableInheritance:
 
-    def setUp(self):
-        self.Base = declarative_base()
-        class TheTable(Temporal, self.Base):
+    @pytest.fixture()
+    def table(self, base):
+        class TheTable(Temporal, base):
             __tablename__ = 'stuff'
             __mapper_args__ = dict(
                 polymorphic_on='type',
@@ -496,53 +496,72 @@ class TestSingleTableInheritance(Helper, TestCase):
             key_columns = ['type', 'col']
             type = Column(String)
             col = Column(String)
-        self.TheTable = TheTable
-        class Model1(TheTable):
+        return TheTable
+
+    @pytest.fixture()
+    def model1(self, table):
+        class Model1(table):
             __mapper_args__ = dict(
                 polymorphic_identity='model1',
             )
-        class Model2(TheTable):
+        return Model1
+
+    @pytest.fixture()
+    def model2(self, table):
+        class Model2(table):
             __mapper_args__ = dict(
                 polymorphic_identity='model2',
             )
-        self.Model1 = Model1
-        self.Model2 = Model2
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        self.Base.metadata.create_all(self.session.bind)
+        return Model2
 
-    def test_only_two_constraints_created(self):
+    @pytest.fixture(autouse=True)
+    def session(self, db, base, model1, model2):
+        with create_tables_and_session(db, base) as session:
+            yield session
+
+    def test_only_two_constraints_created(self, base, table):
         # paranoid: only one table
-        compare(self.Base.metadata.tables.keys(), expected=['stuff'])
+        compare(base.metadata.tables.keys(), expected=['stuff'])
         compare(
             sorted(c.__class__.__name__
-                   for c in self.TheTable.__table__.constraints),
+                   for c in table.__table__.constraints),
             expected=(
                 'CheckConstraint', 'ExcludeConstraint', 'PrimaryKeyConstraint'
             )
         )
 
-    def test_add_one_of_each(self):
-        self.session.add(self.Model1(col='a', period=Range(dt(2001, 1, 1))))
-        self.session.add(self.Model2(col='b', period=Range(dt(2001, 1, 1))))
+    def test_add_one_of_each(self, model1, model2, session):
+        session.add(model1(col='a', period=Range(dt(2001, 1, 1))))
+        session.add(model2(col='b', period=Range(dt(2001, 1, 1))))
         # you get the helper methods, but no exclude constraint
-        self.session.flush()
+        session.flush()
 
 
-class SetForPeriodSetup(Helper):
+class SetForPeriodHelpers:
 
-    def setUp(self):
-        b = declarative_base()
-        class Model(Temporal, Common, b):
+    @pytest.fixture(autouse=True)
+    def model(self, base):
+
+        class Model(Temporal, Common, base):
             key_columns = ['key']
             key = Column(String)
             value = Column(String)
+
         self.Model = Model
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        b.metadata.create_all(self.session.bind)
-        self.log = LogCapture(recursive_check=True)
-        self.addCleanup(self.log.uninstall)
+
+        return Model
+
+    @pytest.fixture(autouse=True)
+    def session_(self, db, base):
+        with create_tables_and_session(db, base) as session:
+            self.session = session
+            yield session
+
+    @pytest.fixture(autouse=True)
+    def log_(self):
+        with LogCapture(recursive_check=True) as log:
+            self.log = log
+            yield log
 
     def check(self, *expected):
         self.session.flush()
@@ -554,7 +573,7 @@ class SetForPeriodSetup(Helper):
             )])
 
 
-class TestCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
+class TestCoalesceSetForPeriod(SetForPeriodHelpers):
 
     def test_simple(self):
         # existing:
@@ -843,7 +862,7 @@ class TestCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
         )
 
 
-class TestNoCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
+class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
 
     def test_simple(self):
         # existing:
@@ -1559,17 +1578,20 @@ class TestNoCoalesceSetForPeriod(SetForPeriodSetup, TestCase):
              '2010-04-29 00:00:00 to 2010-04-29 12:00:00'),
         )
 
-class TestSetForPeriodMultiValue(Helper, TestCase):
 
-    def setUp(self):
-        b = declarative_base()
-        class Model(Temporal, Common, b):
+class TestSetForPeriodMultiValue:
+
+    @pytest.fixture()
+    def model(self, base):
+
+        class Model(Temporal, Common, base):
             key_columns = ['key']
             key = Column(String)
             value1 = Column(String)
             value2 = Column(String)
-        self.Model = Model
 
-    def test_pretty_value(self):
-        compare(self.Model(key='k', value1='v1', value2='v2').pretty_value,
+        return Model
+
+    def test_pretty_value(self, model):
+        compare(model(key='k', value1='v1', value2='v2').pretty_value,
                 expected="value1='v1', value2='v2'")

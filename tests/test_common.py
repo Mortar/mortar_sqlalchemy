@@ -1,103 +1,105 @@
-from unittest import TestCase
-from sqlalchemy.orm import relationship, joinedload
-from mortar_mixins.common import Common
+import pytest
 from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, joinedload, Session
 from testfixtures import compare, ShouldAssert
-from mortar_rdb import get_session
-from mortar_rdb.testing import register_session
+
+from mortar_mixins.common import Common
+from mortar_mixins.testing import create_tables_and_session
 
 
-class SetupModels(object):
+@pytest.fixture
+def model(base):
 
-    def setUp(self):
-        register_session(transactional=False)
+    class Model(Common, base):
+        id = Column(Integer, primary_key=True)
+        value = Column(Integer)
 
-        self.Base = declarative_base()
+    return Model
 
-        class Model(Common, self.Base):
-            id =  Column(Integer, primary_key=True)
-            value = Column(Integer)
 
-        class AnotherModel(Common, self.Base):
+@pytest.fixture
+def another_model(base):
+
+    class AnotherModel(Common, base):
+        id = Column(Integer, primary_key=True)
+        attr = Column(Integer)
+        other_id = Column(Integer, ForeignKey('model.id'))
+        other = relationship("Model", backref='another')
+
+    return AnotherModel
+
+
+@pytest.fixture()
+def session(db, base, model, another_model):
+    with create_tables_and_session(db, base) as session:
+        yield session
+
+
+class TestCommon:
+
+    def test_table_name(self, model):
+        compare(model.__table__.name, 'model')
+
+    def test_eq_wrong_type(self, model):
+        assert not (model() == object())
+
+    def test_eq_wrong_model_type(self, base, model):
+        class OtherModel(Common, base):
             id = Column(Integer, primary_key=True)
-            attr = Column(Integer)
-            other_id = Column(Integer, ForeignKey('model.id'))
-            other = relationship("Model", backref='another')
+        assert not (model(id=1) == OtherModel(id=1))
 
-        self.Model = Model
-        self.AnotherModel = AnotherModel
+    def test_eq_different(self, model):
+        assert not (model(id=1) == model(id=2))
 
-        self.session = get_session()
-        self.addCleanup(self.session.rollback)
-        self.Base.metadata.create_all(self.session.bind)
+    def test_eq_different_keys(self, model):
+        assert not (model() == model(id=2))
 
+    def test_eq_same(self, model):
+        assert (model(id=1) == model(id=1))
 
-class CommonTests(SetupModels, TestCase):
+    def test_ne_wrong_type(self, model):
+        assert (model() != object())
 
-    def test_table_name(self):
-        compare(self.Model.__table__.name, 'model')
-
-    def test_eq_wrong_type(self):
-        self.assertFalse(self.Model() == object())
-
-    def test_eq_wrong_model_type(self):
-        class OtherModel(Common, self.Base):
+    def test_ne_wrong_model_type(self, base, model):
+        class OtherModel(Common, base):
             id = Column(Integer, primary_key=True)
-        self.assertFalse(self.Model(id=1) == OtherModel(id=1))
+        assert (model(id=1) != OtherModel(id=1))
 
-    def test_eq_different(self):
-        self.assertFalse(self.Model(id=1) == self.Model(id=2))
+    def test_ne_different(self, model):
+        assert (model(id=1) != model(id=2))
 
-    def test_eq_different_keys(self):
-        self.assertFalse(self.Model() == self.Model(id=2))
+    def test_ne_same(self, model):
+        assert (model(id=1) != model(id=2))
 
-    def test_eq_same(self):
-        self.assertTrue(self.Model(id=1) == self.Model(id=1))
+    def test_repr(self, model):
+        compare('Model(id=1, value=3)', repr(model(id=1, value=3)))
 
-    def test_ne_wrong_type(self):
-        self.assertTrue(self.Model() != object())
+    def test_str(self, model):
+        compare('Model(id=3, value=1)', str(model(id=3, value=1)))
 
-    def test_ne_wrong_model_type(self):
-        class OtherModel(Common, self.Base):
-            id = Column(Integer, primary_key=True)
-        self.assertTrue(self.Model(id=1) != OtherModel(id=1))
-
-    def test_ne_different(self):
-        self.assertTrue(self.Model(id=1) != self.Model(id=2))
-
-    def test_ne_same(self):
-        self.assertTrue(self.Model(id=1) != self.Model(id=2))
-
-    def test_repr(self):
-        compare('Model(id=1, value=3)', repr(self.Model(id=1, value=3)))
-
-    def test_str(self):
-        compare('Model(id=3, value=1)', str(self.Model(id=3, value=1)))
-
-    def test_repr_relationships_excluded(self):
-        model = self.AnotherModel(id=1, other=self.Model(id=1, value=42))
-        self.session.add(model)
-        self.session.flush()
+    def test_repr_relationships_excluded(self, model, another_model, session):
+        model = another_model(id=1, other=model(id=1, value=42))
+        session.add(model)
+        session.flush()
         compare('AnotherModel(id=1, other_id=1)',
                 actual=str(model))
 
 
-class CompareTests(SetupModels, TestCase):
+class TestCompare:
 
     def check_raises(self, x, y, message, **kw):
         with ShouldAssert(message):
             compare(x, y, **kw)
 
-    def test_identical(self):
+    def test_identical(self, model):
         compare(
-            [self.Model(id=1), self.Model(id=2)],
-            [self.Model(id=1), self.Model(id=2)]
+            [model(id=1), model(id=2)],
+            [model(id=1), model(id=2)]
             )
 
-    def test_different(self):
+    def test_different(self, model):
         self.check_raises(
-            self.Model(id=1), self.Model(id=2),
+            model(id=1), model(id=2),
             "Model not as expected:\n"
             '\n'
             'same:\n'
@@ -107,37 +109,37 @@ class CompareTests(SetupModels, TestCase):
             "'id': 1 != 2"
         )
 
-    def test_different_types(self):
+    def test_different_types(self, model, another_model):
         self.check_raises(
-            self.Model(id=1), self.AnotherModel(id=1),
+            model(id=1), another_model(id=1),
             "Model(id=1) != AnotherModel(id=1)"
         )
 
-    def test_db_versus_non_db_equal(self):
-        self.session.add(self.Model(id=1))
-        self.session.add(self.AnotherModel(id=2, other_id=1))
-        self.session.commit()
+    def test_db_versus_non_db_equal(self, model, another_model, session):
+        session.add(model(id=1))
+        session.add(another_model(id=2, other_id=1))
+        session.flush()
 
-        db = self.session\
-            .query(self.AnotherModel)\
-            .options(joinedload(self.AnotherModel.other, innerjoin=True))\
+        db = session\
+            .query(another_model)\
+            .options(joinedload(another_model.other, innerjoin=True))\
             .one()
 
-        raw = self.AnotherModel(id=2, other_id=1)
+        raw = another_model(id=2, other_id=1)
 
         compare(db, raw)
 
-    def test_db_versus_non_db_not_equal(self):
-        self.session.add(self.Model(id=1))
-        self.session.add(self.AnotherModel(id=2, other_id=1))
-        self.session.commit()
+    def test_db_versus_non_db_not_equal(self, model, another_model, session):
+        session.add(model(id=1))
+        session.add(another_model(id=2, other_id=1))
+        session.flush()
 
-        db = self.session\
-            .query(self.AnotherModel)\
-            .options(joinedload(self.AnotherModel.other, innerjoin=True))\
+        db = session\
+            .query(another_model)\
+            .options(joinedload(another_model.other, innerjoin=True))\
             .one()
 
-        raw = self.AnotherModel(id=2, other=self.Model(id=2), attr=6)
+        raw = another_model(id=2, other=model(id=2), attr=6)
 
         self.check_raises(
             db, raw,
@@ -155,19 +157,19 @@ class CompareTests(SetupModels, TestCase):
             "While comparing ['other_id']: 1 != None"
         )
 
-    def test_backref_equal(self):
-        db = self.AnotherModel(id=2, other=self.Model(id=1, value=2))
-        self.session.add(db)
-        self.session.commit()
-        db = self.session.query(self.AnotherModel).one()
-        raw = self.AnotherModel(id=2, other=self.Model(id=1, value=2))
+    def test_backref_equal(self, model, another_model, session):
+        db = another_model(id=2, other=model(id=1, value=2))
+        session.add(db)
+        session.flush()
+        db = session.query(another_model).one()
+        raw = another_model(id=2, other=model(id=1, value=2))
         compare(raw, db, ignore_fields=['other_id'])
 
-    def test_ignore_fields(self):
-        compare(self.Model(id=1), self.Model(id=2), ignore_fields=['id'])
+    def test_ignore_fields(self, model):
+        compare(model(id=1), model(id=2), ignore_fields=['id'])
 
-    def test_hashable(self):
-        o = self.Model(id=1)
+    def test_hashable(self, model):
+        o = model(id=1)
         mapping = {}
         assert o not in mapping
         mapping[o] = 1
