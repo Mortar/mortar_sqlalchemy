@@ -18,8 +18,6 @@ def drop_tables(conn):
     for table_name in inspector.get_table_names():
         fks = []
         for fk in inspector.get_foreign_keys(table_name):
-            if not fk['name']:
-                continue
             fks.append(
                 ForeignKeyConstraint((), (), name=fk['name'])
             )
