@@ -367,26 +367,28 @@ class TestExcludeConstraintConstruction:
 
     def test_valid(self, booking, session):
         session.add(booking(
-                hotel='h1', room=1, period=Range(dt(2001, 1, 1),)
-                ))
+            hotel='h1', room=1, period=Range(dt(2001, 1, 1),)
+        ))
         session.add(booking(
-                hotel='h1', room=2, period=Range(dt(2001, 1, 1),)
-                ))
+            hotel='h1', room=2, period=Range(dt(2001, 1, 1),)
+        ))
         session.add(booking(
-                hotel='h2', room=1, period=Range(dt(2001, 1, 1),)
-                ))
+            hotel='h2', room=1, period=Range(dt(2001, 1, 1),)
+        ))
         session.add(booking(
-                hotel='h2', room=2, period=Range(dt(2001, 1, 1),)
-                ))
+            hotel='h2', room=2, period=Range(dt(2001, 1, 1),)
+        ))
         session.flush()
 
     def test_invalid(self, booking, session):
         session.add(booking(
-                hotel='h1', room=1, period=Range(dt(2001, 1, 1), None)
-                ))
+            hotel='h1', room=1, period=Range(dt(2001, 1, 1), None)
+        ))
         session.add(booking(
-                hotel='h1', room=1, period=Range(None, dt(2001, 1, 2))
-                ))
+            hotel='h1', room=1, period=Range(None, dt(2001, 1, 2))
+        ))
+        with ShouldRaise(IntegrityError):
+            session.flush()
 
 
 class TestValueColumnGuessing:
