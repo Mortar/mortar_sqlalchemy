@@ -391,6 +391,30 @@ class TestExcludeConstraintConstruction:
             session.flush()
 
 
+class TestExcludeConstraintTurnedOff:
+
+    @pytest.fixture()
+    def model(self, base):
+        class Model(Temporal, Common, base):
+            key_columns = ['name']
+            exclude_constraint = False
+            name = Column(String)
+
+        return Model
+
+    @pytest.fixture()
+    def session(self, db, base, model):
+        with create_tables_and_session(db, base) as session:
+            yield session
+
+    def test_invalid(self, model, session):
+        # Check that the exclude constraint isn't present, so
+        # we don't get an exception:
+        session.add(model(name='foo', period=Range(dt(2001, 1, 1), None)))
+        session.add(model(name='foo', period=Range(dt(2002, 1, 1), None)))
+        session.flush()
+
+
 class TestValueColumnGuessing:
 
     def test_no_key_columns(self, base):

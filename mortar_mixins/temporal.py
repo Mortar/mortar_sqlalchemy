@@ -63,6 +63,7 @@ class Temporal(object):
 
     key_columns: List[str] = None
     value_columns: List[str] = None
+    exclude_constraint: bool = True
 
     def __init__(self, **kw):
         value_from = kw.pop('value_from', None)
@@ -317,7 +318,8 @@ def add_constraints_and_attributes(mapper, class_):
         for col_name in class_.key_columns:
             elements.append((getattr(class_, col_name), '='))
         elements.append(('period', '&&'))
-        table.append_constraint(ExcludeConstraint(*elements))
+        if class_.exclude_constraint:
+            table.append_constraint(ExcludeConstraint(*elements))
 
         if class_.value_columns is None:
             exclude = {'id', 'period'}
