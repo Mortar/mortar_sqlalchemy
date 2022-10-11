@@ -1,5 +1,6 @@
 from itertools import tee
 from logging import getLogger, WARNING, INFO, DEBUG
+from typing import List
 
 from psycopg2.extras import DateTimeRange
 from sqlalchemy import Column, CheckConstraint
@@ -60,8 +61,8 @@ def period_str(value_from, value_to):
 
 class Temporal(object):
 
-    key_columns = None
-    value_columns = None
+    key_columns: List[str] = None
+    value_columns: List[str] = None
 
     def __init__(self, **kw):
         value_from = kw.pop('value_from', None)
