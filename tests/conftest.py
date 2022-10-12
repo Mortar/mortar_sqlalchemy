@@ -1,19 +1,13 @@
-from os import environ
-
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
+
+from mortar_mixins.testing import connection_in_transaction
 
 
 @pytest.fixture(scope='session')
 def db():
-    engine = create_engine(environ['DB_URL'], future=True)
-    conn = engine.connect()
-    transaction = conn.begin()
-    try:
+    with connection_in_transaction() as conn:
         yield conn
-    finally:
-        transaction.rollback()
 
 
 @pytest.fixture

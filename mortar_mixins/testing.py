@@ -1,6 +1,7 @@
 from contextlib import contextmanager
+from os import environ
 
-from sqlalchemy import MetaData, ForeignKeyConstraint, Table, inspect
+from sqlalchemy import MetaData, ForeignKeyConstraint, Table, inspect, create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.ddl import DropConstraint, DropTable
 
@@ -28,6 +29,17 @@ def drop_tables(conn):
 
     for table in tbs:
         conn.execute(DropTable(table))
+
+
+@contextmanager
+def connection_in_transaction(url: str = None):
+    engine = create_engine(url or environ['DB_URL'], future=True)
+    conn = engine.connect()
+    transaction = conn.begin()
+    try:
+        yield conn
+    finally:
+        transaction.rollback()
 
 
 @contextmanager
