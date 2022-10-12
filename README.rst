@@ -31,5 +31,3 @@ Releasing
 To make a release, just update the version in ``setup.py``
 and push to https://github.com/Mortar/mortar_mixins
 and Carthorse should take care of the rest.
-
-

@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 setup(
     name='mortar_mixins',
     author='Chris Withers',
-    version='2.3.5',
+    version='3.0.0',
     author_email='chris@withers.org',
     license='MIT',
     description="SQLAlchemy mixins for use with Postgres.",
