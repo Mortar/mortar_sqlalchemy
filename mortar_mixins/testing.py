@@ -43,12 +43,18 @@ def connection_in_transaction(url: str = None):
 
 
 @contextmanager
-def create_tables_and_session(db, base):
-    transaction = db.begin_nested()
+def nested_transaction_on_connection(conn):
+    transaction = conn.begin_nested()
     try:
-        base.metadata.create_all(bind=db, checkfirst=False)
-        yield Session(db)
+        yield
     finally:
         # https://docs.sqlalchemy.org/en/14/faq/sessions.html#but-why-does-flush-insist-on-issuing-a-rollback
         if transaction.is_active:
             transaction.rollback()
+
+
+@contextmanager
+def create_tables_and_session(db, base):
+    with nested_transaction_on_connection(db):
+        base.metadata.create_all(bind=db, checkfirst=False)
+        yield Session(db)
