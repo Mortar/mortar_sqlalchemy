@@ -1,5 +1,4 @@
 # import orm here so that event registration work
-import sqlalchemy.orm
 
-from .common import Common
-from .temporal import Temporal
+from mortar_sqlalchemy.mixins.common import Common
+from mortar_sqlalchemy.mixins.temporal import Temporal

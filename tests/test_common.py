@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship, joinedload, Session
+from sqlalchemy.orm import relationship, joinedload
 from testfixtures import compare, ShouldAssert
 
-from mortar_sqlalchemy.common import Common
+from mortar_sqlalchemy import Common
 from mortar_sqlalchemy.testing import create_tables_and_session
 
 
