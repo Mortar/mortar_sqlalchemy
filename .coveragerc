@@ -1,5 +1,5 @@
 [run]
-source = mortar_mixins,tests
+source = mortar_sqlalchemy,tests
 
 [report]
 omit = */performance/*

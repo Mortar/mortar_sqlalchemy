@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, Column, Integer, ForeignKey, inspect
 from sqlalchemy.orm import relationship, Session
 from testfixtures import compare
 
-from mortar_mixins.testing import drop_tables
+from mortar_sqlalchemy.testing import drop_tables
 
 
 @pytest.fixture()

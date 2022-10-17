@@ -7,14 +7,14 @@ from setuptools import setup, find_packages
 base_dir = os.path.dirname(__file__)
 
 setup(
-    name='mortar_mixins',
+    name='mortar_sqlalchemy',
     author='Chris Withers',
-    version='3.0.0',
+    version='1.0.0.dev1',
     author_email='chris@withers.org',
     license='MIT',
-    description="SQLAlchemy mixins for use with Postgres.",
+    description="Mixins, Helpers and patterns for SQLAlchemy.",
     long_description=open(os.path.join(base_dir, 'README.rst')).read(),
-    url='https://github.com/Mortar/mortar_mixins',
+    url='https://github.com/Mortar/mortar_sqlalchemy',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

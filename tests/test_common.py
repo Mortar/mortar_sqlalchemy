@@ -3,8 +3,8 @@ from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship, joinedload, Session
 from testfixtures import compare, ShouldAssert
 
-from mortar_mixins.common import Common
-from mortar_mixins.testing import create_tables_and_session
+from mortar_sqlalchemy.common import Common
+from mortar_sqlalchemy.testing import create_tables_and_session
 
 
 @pytest.fixture

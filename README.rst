@@ -1,12 +1,12 @@
 |CircleCI|_
 
-.. |CircleCI| image:: https://circleci.com/gh/Mortar/mortar_mixins/tree/master.svg?style=shield
-.. _CircleCI: https://circleci.com/gh/Mortar/mortar_mixins/tree/master
+.. |CircleCI| image:: https://circleci.com/gh/Mortar/mortar_sqlalchemy/tree/master.svg?style=shield
+.. _CircleCI: https://circleci.com/gh/Mortar/mortar_sqlalchemy/tree/master
 
-mortar_mixins
-=============
+mortar_sqlalchemy
+=================
 
-SQLAlchemy mixins for use with Postgres 9.2+.
+Mixins, Helpers and patterns for SQLAlchemy.
 
 Install from PyPI with pip.
 
@@ -29,5 +29,5 @@ Releasing
 ---------
 
 To make a release, just update the version in ``setup.py``
-and push to https://github.com/Mortar/mortar_mixins
+and push to https://github.com/Mortar/mortar_sqlalchemy
 and Carthorse should take care of the rest.

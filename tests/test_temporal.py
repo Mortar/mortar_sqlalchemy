@@ -7,9 +7,9 @@ from sqlalchemy.schema import Column
 from sqlalchemy.types import Integer, String
 from testfixtures import ShouldRaise, compare, LogCapture
 
-from mortar_mixins.common import Common
-from mortar_mixins.temporal import Temporal
-from mortar_mixins.testing import create_tables_and_session
+from mortar_sqlalchemy.common import Common
+from mortar_sqlalchemy.temporal import Temporal
+from mortar_sqlalchemy.testing import create_tables_and_session
 
 
 @pytest.fixture()
@@ -611,7 +611,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 onwards set to n")
         )
 
@@ -629,7 +629,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2002-01-01 00:00:00 onwards set to n")
         )
 
@@ -646,7 +646,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 set to v")
         )
 
@@ -666,10 +666,10 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to v"),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2004-01-01 00:00:00 onwards "
              "set to v",),
         )
@@ -690,10 +690,10 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to v"),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2003-01-01 00:00:00 to 2004-01-01 00:00:00 "
              "set to v"),
         )
@@ -715,10 +715,10 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), dt(2005, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to v"),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2004-01-01 00:00:00 to 2005-01-01 00:00:00 "
              "set to v"),
         )
@@ -744,7 +744,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2004, 1, 1), dt(2005, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 set to v")
         )
 
@@ -767,15 +767,15 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), dt(2006, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal',
+            ('mortar_sqlalchemy.temporal',
              'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to v"),
-            ('mortar_mixins.temporal',
+            ('mortar_sqlalchemy.temporal',
              'WARNING',
              "key='k' from 2003-01-01 00:00:00 to 2004-01-01 00:00:00 "
              "changed from o to v"),
-            ('mortar_mixins.temporal',
+            ('mortar_sqlalchemy.temporal',
              'INFO',
              "key='k' from 2005-01-01 00:00:00 to 2006-01-01 00:00:00 "
              "set to v")
@@ -794,7 +794,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'DEBUG',
+            ('mortar_sqlalchemy.temporal', 'DEBUG',
              "key='k' from 2002-01-01 00:00:00 onwards left at v")
         )
 
@@ -814,10 +814,10 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o', dt(2003, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2002-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o to n"),
         )
@@ -836,7 +836,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), dt(2002, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' changed period "
              "from 2001-01-01 00:00:00 onwards "
              "to 2001-01-01 00:00:00 to 2002-01-01 00:00:00")
@@ -857,7 +857,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' changed period "
              "from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "to 2001-01-01 00:00:00 onwards")
@@ -882,7 +882,7 @@ class TestCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o1', None, dt(2001, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o1 to v")
         )
@@ -900,7 +900,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 onwards set to n")
         )
 
@@ -920,7 +920,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 1999-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to n")
         )
@@ -944,7 +944,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "set to n")
         )
@@ -964,7 +964,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2002-01-01 00:00:00 onwards "
              "changed from o to n")
         )
@@ -985,7 +985,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2000, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2000-01-01 00:00:00 onwards "
              "set to n")
         )
@@ -1006,10 +1006,10 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2000, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o to n"),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 onwards "
              "set to n")
         )
@@ -1030,7 +1030,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 1999-01-01 00:00:00 to 2000-01-01 00:00:00 "
              "set to n")
         )
@@ -1051,7 +1051,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 1999-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to n")
         )
@@ -1072,10 +1072,10 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 1999-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "set to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o to n"),
         )
@@ -1095,7 +1095,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2002, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2002-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o to n")
         )
@@ -1116,7 +1116,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2000, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2000-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "set to n")
         )
@@ -1142,13 +1142,13 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o3', dt(2003, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o2 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2002-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o3 to n"),
         )
@@ -1176,16 +1176,16 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o4', dt(2004, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o2 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2002-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o3 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2003-01-01 00:00:00 to 2004-01-01 00:00:00 "
              "changed from o4 to n"),
         )
@@ -1212,7 +1212,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o3', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
         )
@@ -1242,7 +1242,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o4', dt(2003, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
         )
@@ -1266,10 +1266,10 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2002, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o2 to n"),
         )
@@ -1292,10 +1292,10 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2000, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o2 to n"),
         )
@@ -1318,13 +1318,13 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2000, 1, 1), dt(2004, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o2 to n"),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2003-01-01 00:00:00 to 2004-01-01 00:00:00 "
              "set to n"),
         )
@@ -1348,7 +1348,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2001, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
         )
@@ -1372,10 +1372,10 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o2 to n"),
         )
@@ -1399,7 +1399,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
         )
@@ -1418,7 +1418,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2002-01-01 00:00:00 onwards set to v")
         )
 
@@ -1435,7 +1435,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'DEBUG',
+            ('mortar_sqlalchemy.temporal', 'DEBUG',
              "key='k' from 2001-01-01 00:00:00 onwards left at v")
         )
 
@@ -1454,7 +1454,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), dt(2002, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' changed period from 2001-01-01 00:00:00 onwards to "
              "2001-01-01 00:00:00 to 2002-01-01 00:00:00")
         )
@@ -1474,7 +1474,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2001, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' changed period from "
              "2001-01-01 00:00:00 to 2002-01-01 00:00:00 to "
              "2001-01-01 00:00:00 onwards")
@@ -1498,7 +1498,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'DEBUG',
+            ('mortar_sqlalchemy.temporal', 'DEBUG',
              "key='k' from 1999-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "left at o1")
         )
@@ -1521,7 +1521,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2002, 1, 1), None),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 1999-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "changed from o1 to n")
         )
@@ -1544,7 +1544,7 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'o2', dt(2002, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n")
         )
@@ -1566,13 +1566,13 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'n', dt(2000, 1, 1), dt(2003, 1, 1)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2000-01-01 00:00:00 to 2001-01-01 00:00:00 "
              "changed from o1 to n"),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' from 2001-01-01 00:00:00 to 2002-01-01 00:00:00 "
              "set to n"),
-            ('mortar_mixins.temporal', 'WARNING',
+            ('mortar_sqlalchemy.temporal', 'WARNING',
              "key='k' from 2002-01-01 00:00:00 to 2003-01-01 00:00:00 "
              "changed from o2 to n"),
         )
@@ -1596,10 +1596,10 @@ class TestNoCoalesceSetForPeriod(SetForPeriodHelpers):
             ('k', 'v', dt(2010, 4, 29, 0, 0), dt(2010, 4, 29, 12, 0)),
         )
         self.log.check(
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' changed period from 2010-04-28 00:00:00 to 2010-04-28 12:00:00 to "
              '2010-04-28 00:00:00 to 2010-04-29 00:00:00'),
-            ('mortar_mixins.temporal', 'INFO',
+            ('mortar_sqlalchemy.temporal', 'INFO',
              "key='k' changed period from 2010-04-28 12:00:00 to 2010-04-29 12:00:00 to "
              '2010-04-29 00:00:00 to 2010-04-29 12:00:00'),
         )

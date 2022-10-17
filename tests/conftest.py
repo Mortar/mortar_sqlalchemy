@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import declarative_base
 
-from mortar_mixins.testing import connection_in_transaction
+from mortar_sqlalchemy.testing import connection_in_transaction
 
 
 @pytest.fixture(scope='session')
