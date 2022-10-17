@@ -30,8 +30,9 @@ setup(
         'psycopg2',
     ),
     extras_require=dict(
-        test=['pytest', 'pytest-cov', 'testfixtures'],
-        build=['setuptools-git', 'wheel', 'twine']
+        test=['pytest', 'pytest-cov', 'sybil', 'testfixtures'],
+        build=['setuptools-git', 'wheel', 'twine'],
+        docs=['sphinx', 'furo'],
     ),
 )
 
