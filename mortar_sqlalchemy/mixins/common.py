@@ -1,6 +1,8 @@
 import re
+from typing import Type
+
 from sqlalchemy import inspect
-from sqlalchemy.util import classproperty
+from sqlalchemy.orm import declared_attr
 
 name_re = re.compile('([a-z]|^)([A-Z])')
 
@@ -27,13 +29,21 @@ def comparable_attributes(obj):
         yield name, attr.value
 
 
-class Common(object):
+class Common:
+    """
+    This mixin provides a common set of functionality that is slightly opinionated.
+    """
     
-    @classproperty
-    def __tablename__(cls):
+    @declared_attr
+    def __tablename__(cls: Type) -> str:
         return de_hump(cls)
     
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        """
+        Instances of this class are considered equal if values of all the
+        mapped attributes are equal. Relationships are excluded from this,
+        but the attributes that are used to form them are included.
+        """
         if type(self) is not type(other):
             return False
         other_attrs = inspect(other).attrs
@@ -42,13 +52,20 @@ class Common(object):
                 return False
         return True
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """
+        The Python identity of instances of this class is used as its hash.
+        """
         return id(self)
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not (self == other)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        The :func:`repr` of instances of this class shows the values of all
+        mapped attributes.
+        """
         content = []
         for name, value in sorted(comparable_attributes(self)):
             if value is not None:
@@ -88,7 +105,7 @@ try:
     from testfixtures.comparison import (
         register, _compare_mapping, compare_simple
     )
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     pass
 else:
     register(Common, compare_common)
