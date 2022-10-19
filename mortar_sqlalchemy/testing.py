@@ -4,10 +4,13 @@ from typing import Iterable
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.future import Connection
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, DeclarativeBase
 
 
 def drop_tables(conn):
+    """
+    XXX
+    """
     # https://github.com/sqlalchemy/sqlalchemy/wiki/DropEverything
     metadata = MetaData()
     metadata.reflect(conn)
@@ -16,6 +19,9 @@ def drop_tables(conn):
 
 @contextmanager
 def connection_in_transaction(url: str = None) -> Iterable[Connection]:
+    """
+    XXX
+    """
     engine = create_engine(url or environ['DB_URL'], future=True)
     conn = engine.connect()
     transaction = conn.begin()
@@ -26,7 +32,10 @@ def connection_in_transaction(url: str = None) -> Iterable[Connection]:
 
 
 @contextmanager
-def nested_transaction_on_connection(conn):
+def nested_transaction_on_connection(conn: Connection) -> Iterable[None]:
+    """
+    XXX
+    """
     transaction = conn.begin_nested()
     with transaction:
         yield
@@ -35,7 +44,10 @@ def nested_transaction_on_connection(conn):
 
 
 @contextmanager
-def create_tables_and_session(db, base):
+def create_tables_and_session(db: Connection, base: DeclarativeBase) -> Iterable[Session]:
+    """
+    XXX
+    """
     with nested_transaction_on_connection(db):
         base.metadata.create_all(bind=db, checkfirst=False)
         # https://github.com/sqlalchemy/sqlalchemy/discussions/12006#discussioncomment-10979244
