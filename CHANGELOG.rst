@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.0.0 (XX YYY ZZZZ)
--------------------
+0.12.1 (11 Mar 2019)
+--------------------
 
-- First release of this package since renaming from ``mortar_mixins``.
+- For this and earlier releases, please see git commit history.

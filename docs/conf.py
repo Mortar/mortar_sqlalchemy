@@ -15,6 +15,9 @@ extensions = [
 
 intersphinx_mapping = {
     'https://docs.python.org/3/': None,
+    'https://testfixtures.readthedocs.io/en/latest/': None,
+    'https://docs.sqlalchemy.org/': None,
+    'https://www.psycopg.org/docs/': None,
 }
 
 # General

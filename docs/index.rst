@@ -4,9 +4,11 @@
   :end-before: Full documentation
 
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
-   use.rst
+   common.rst
+   temporal.rst
+   testing.rst
 
 There is also an API reference:
 
