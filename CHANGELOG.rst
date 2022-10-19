@@ -1,7 +1,11 @@
 Changes
 =======
 
-1.0.0 (XX YYY ZZZZ)
--------------------
+3.0.0 (12 Oct 2022)
+--------------------
 
-- First release of this package since renaming from ``mortar_mixins``.
+For this and earlier releases, please see git commit history.
+This package was known as `mortar_mixins`__ for this release and earlier.
+
+__ https://pypi.org/project/mortar-mixins/#history
+

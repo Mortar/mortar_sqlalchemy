@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import (
     TSRANGE as Range,
 )
 from sqlalchemy.event import listen
-from sqlalchemy.orm import has_inherited_table
+from sqlalchemy.orm import has_inherited_table, Mapped
 
 from itertools import zip_longest
 
@@ -51,7 +51,7 @@ def latest(x, y):
     return None if (x is None or y is None) else max(x, y)
 
 
-def period_str(value_from, value_to):
+def period_str(value_from, value_to) -> str:
     if value_from is None and value_to is None:
         return 'always'
     if value_from is None:
@@ -62,9 +62,26 @@ def period_str(value_from, value_to):
 
 
 class Temporal:
+    """
+    This mixin takes advantage of the Postgres `range types`__ in order to help store
+    tabular information that changes over time.
 
+
+    __ https://www.postgresql.org/docs/current/rangetypes.html
+    """
+
+    #: The names of the columns that uniquely identify this row.
+    #: In a non-temporal model, this would be the table's primary key columns.
     key_columns: List[str]
+
+    #: The columns to consider as "values" for this type of object, by default this
+    #: is all columns that are not :any:`key_columns` excluding :any:`id` and :any:`period`.
     value_columns: List[str] = None
+
+    #: Controls whether an `exclude constraint`__ is generated for this table, such that
+    #: accidental overlaps of data are prevented.
+    #:
+    #: __ https://www.postgresql.org/docs/current/rangetypes.html#RANGETYPES-CONSTRAINT
     exclude_constraint: bool = True
 
     def __init__(self, **kw):
@@ -80,18 +97,28 @@ class Temporal:
             period = kw.pop('period', None)
         super(Temporal, self).__init__(period=period, **kw)
 
-    id = Column(Integer, primary_key=True)
-    period = Column(Range(), nullable=False)
+    #: The identifier for this row, which is an automatically generated integer
+    #: that is unique throughout the whole table.
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    #: The :class:`~sqlalchemy.schema.Column` specifying the period represented
+    #: by this row. When being set, this should be a
+    #: :class:`Range[datetime] <psycopg.types.range.Range>`.
+    #: When being retrieved, it will likewise be a
+    #: :class:`Range[datetime] <psycopg.types.range.Range>`.
+    period: Mapped[DateTimeRange] = Column(Range(), nullable=False)
 
     @classmethod
-    def value_at(cls, timestamp):
+    def value_at(cls, timestamp: datetime):
         """
         Returns a clause element that returns the current value
         """
         return cls.period.contains(timestamp)
 
     @property
-    def value_from(self):
+    def value_from(self) -> datetime:
+        """
+        A helper for retrieving or setting the lower bound of the :attr:`period`.
+        """
         return self.period.lower
 
     @value_from.setter
@@ -101,9 +128,12 @@ class Temporal:
         else:
             upper = self.period.upper
         self.period = DateTimeRange(timestamp, upper)
-        
+
     @property
-    def value_to(self):
+    def value_to(self) -> datetime:
+        """
+        A helper for retrieving or setting the upper bound of the :attr:`period`.
+        """
         return self.period.upper
 
     @value_to.setter
@@ -115,10 +145,17 @@ class Temporal:
         self.period = DateTimeRange(lower, timestamp)
 
     @property
-    def value_tuple(self):
+    def value_tuple(self) -> tuple[..., ...]:
+        """
+        Return the tuple representing the :any:`value <set_for_period>` of this object.
+        By default, this is constructed from the attributes for all :any:`value_columns`.
+        """
         return tuple(getattr(self, col) for col in self.value_columns)
 
-    def period_str(self):
+    def period_str(self) -> str:
+        """
+        Return a human-readable version of the :any:`period` this object is valid.
+        """
         if self.period is None:
             return 'unknown'
         value_from = self.period.lower
@@ -126,12 +163,18 @@ class Temporal:
         return period_str(value_from, value_to)
 
     @property
-    def pretty_key(self):
+    def pretty_key(self) -> str:
+        """
+        Return a human-readable version of the :attr:`key <key_columns>` for this object.
+        """
         return ', '.join('%s=%r' % (k, getattr(self, k))
                          for k in self.key_columns)
 
     @property
-    def pretty_value(self):
+    def pretty_value(self) -> str:
+        """
+        Return a human-readable version of the :attr:`value <value_columns>` of this object.
+        """
         value = self.value_tuple
         if len(value) == 1:
             return value[0]
@@ -139,6 +182,11 @@ class Temporal:
                          for k in self.value_columns)
 
     def overlaps(self, session):
+        """
+        Returns a query for all objects that overlap with this one.
+        This means that they are valid for the an overlapping :any:`period`
+        and share the same :any:`key <key_columns>`.
+        """
         model = type(self)
         return session.query(model).filter_by(
             **{key: getattr(self, key) for key in self.key_columns}
@@ -153,7 +201,7 @@ class Temporal:
                        change_logging=WARNING,
                        unchanged_logging=DEBUG):
         """
-        Set the temporal value using the values in ``self`` for the
+        Set the temporal value using the :any:`values <value_tuple>` in ``self`` for the
         keys specified in ``self`` over the period specified in ``self``.
 
         ``self`` should not be attached to any session; the session to the
