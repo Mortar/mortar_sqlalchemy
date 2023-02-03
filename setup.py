@@ -26,7 +26,7 @@ setup(
     zip_safe=False,
     python_requires=">=3.7",
     install_requires=(
-        'SQLAlchemy',
+        'SQLAlchemy<2',
         'psycopg2',
     ),
     extras_require=dict(
