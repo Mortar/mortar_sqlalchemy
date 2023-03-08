@@ -1,34 +1,15 @@
 from contextlib import contextmanager
 from os import environ
 
-from sqlalchemy import MetaData, ForeignKeyConstraint, Table, inspect, create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.ddl import DropConstraint, DropTable
 
 
 def drop_tables(conn):
-
-    inspector = inspect(conn)
-
-    # gather all data first before dropping anything.
-    # some DBs lock after things have been dropped in
-    # a transaction.
+    # https://github.com/sqlalchemy/sqlalchemy/wiki/DropEverything
     metadata = MetaData()
-
-    tbs = []
-    for table_name in inspector.get_table_names():
-        fks = []
-        for fk in inspector.get_foreign_keys(table_name):
-            fks.append(
-                ForeignKeyConstraint((), (), name=fk['name'])
-            )
-        t = Table(table_name, metadata, *fks)
-        tbs.append(t)
-        for fkc in fks:
-            conn.execute(DropConstraint(fkc, cascade=True))
-
-    for table in tbs:
-        conn.execute(DropTable(table))
+    metadata.reflect(conn)
+    metadata.drop_all(conn)
 
 
 @contextmanager
