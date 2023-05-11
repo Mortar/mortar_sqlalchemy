@@ -1,9 +1,9 @@
-from os import environ
-
 import pytest
 from sqlalchemy import create_engine, Column, Integer, ForeignKey, inspect
 from sqlalchemy.orm import relationship, Session
 from testfixtures import compare
+from testservices.provider import Provider
+from testservices.services.databases import Database, DatabaseFromEnvironment, PostgresContainer
 
 from mortar_sqlalchemy.testing import drop_tables
 
@@ -11,13 +11,18 @@ from mortar_sqlalchemy.testing import drop_tables
 @pytest.fixture()
 def db():
     # per-test DB
-    engine = create_engine(environ['DB_URL'], future=True)
-    conn = engine.connect()
-    transaction = conn.begin()
-    try:
-        yield conn
-    finally:
-        transaction.rollback()
+    provider = Provider(
+        DatabaseFromEnvironment(),
+        PostgresContainer(),
+    )
+    with provider as database:
+        engine = create_engine(database.url, future=True)
+        conn = engine.connect()
+        transaction = conn.begin()
+        try:
+            yield conn
+        finally:
+            transaction.rollback()
 
 
 def test_drop_tables(db, base):
