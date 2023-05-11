@@ -1,7 +1,9 @@
 from contextlib import contextmanager
 from os import environ
+from typing import Iterable
 
 from sqlalchemy import MetaData, create_engine
+from sqlalchemy.future import Connection
 from sqlalchemy.orm import Session
 
 
@@ -13,7 +15,7 @@ def drop_tables(conn):
 
 
 @contextmanager
-def connection_in_transaction(url: str = None):
+def connection_in_transaction(url: str = None) -> Iterable[Connection]:
     engine = create_engine(url or environ['DB_URL'], future=True)
     conn = engine.connect()
     transaction = conn.begin()
