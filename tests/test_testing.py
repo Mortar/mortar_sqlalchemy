@@ -12,7 +12,6 @@ from mortar_sqlalchemy.testing import drop_tables
 def db():
     # per-test DB
     provider = Provider(
-        Database,
         DatabaseFromEnvironment(),
         PostgresContainer(),
     )
