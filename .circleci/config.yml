@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  python: cjw296/python-ci@3
+  python: cjw296/python-ci@4
 
 jobs:
   run-tests:
@@ -24,7 +24,7 @@ common: &common
     - run-tests:
         matrix:
           parameters:
-            python: ['3.8', '3.11']
+            python: ['3.11', '3.12']
             postgres: ["11.15"]
 
     - python/coverage:
