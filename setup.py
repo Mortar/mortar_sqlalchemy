@@ -26,8 +26,8 @@ setup(
     zip_safe=False,
     python_requires=">=3.11",
     install_requires=(
-        'SQLAlchemy<2',
-        'psycopg2',
+        'SQLAlchemy>=2',
+        'psycopg>=3',
     ),
     extras_require=dict(
         test=[
@@ -35,9 +35,10 @@ setup(
             'pytest-cov',
             'sybil',
             'testfixtures',
-            'testservices >= 0.2',
+            'testservices >= 0.3',
         ],
         build=[
+            'setuptools',
             'setuptools-git',
             'wheel',
             'twine',

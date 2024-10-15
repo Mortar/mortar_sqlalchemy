@@ -16,6 +16,8 @@ def db():
         PostgresContainer(),
     )
     with provider as database:
+        # Use psycopg3:
+        database.driver = 'psycopg'
         engine = create_engine(database.url, future=True)
         conn = engine.connect()
         transaction = conn.begin()

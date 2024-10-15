@@ -1,8 +1,9 @@
+from datetime import datetime
 from itertools import tee
 from logging import getLogger, WARNING, INFO, DEBUG
 from typing import List
 
-from psycopg2.extras import DateTimeRange
+from psycopg.types.range import Range as PsycopgRange
 from sqlalchemy import Column, CheckConstraint
 from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import (
@@ -10,7 +11,7 @@ from sqlalchemy.dialects.postgresql import (
     TSRANGE as Range,
 )
 from sqlalchemy.event import listen
-from sqlalchemy.ext.declarative import has_inherited_table
+from sqlalchemy.orm import has_inherited_table
 
 from itertools import zip_longest
 
@@ -18,6 +19,7 @@ logger = getLogger(__name__)
 
 unset = object()
 
+DateTimeRange = PsycopgRange[datetime]
 
 def _windowed(iterable):
     a, b = tee(iterable)

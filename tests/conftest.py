@@ -6,7 +6,6 @@ from sqlalchemy.future import Connection
 from sqlalchemy.orm import declarative_base
 from testservices.collection import Collection
 from testservices.provider import Provider
-from testservices.service import Service
 from testservices.services.databases import PostgresContainer, Database, DatabaseFromEnvironment
 
 from mortar_sqlalchemy.testing import connection_in_transaction
@@ -22,6 +21,8 @@ database_provider = Provider[Database](
 @pytest.fixture(scope='session')
 def db() -> Iterable[Connection]:
     with database_provider as database:
+        # Use psycopg3:
+        database.driver = 'psycopg'
         with connection_in_transaction(database.url) as conn:
             conn.execute(text('CREATE EXTENSION IF NOT EXISTS btree_gist'))
             yield conn

@@ -28,10 +28,8 @@ def connection_in_transaction(url: str = None) -> Iterable[Connection]:
 @contextmanager
 def nested_transaction_on_connection(conn):
     transaction = conn.begin_nested()
-    try:
+    with transaction:
         yield
-    finally:
-        # https://docs.sqlalchemy.org/en/14/faq/sessions.html#but-why-does-flush-insist-on-issuing-a-rollback
         if transaction.is_active:
             transaction.rollback()
 
@@ -40,4 +38,5 @@ def nested_transaction_on_connection(conn):
 def create_tables_and_session(db, base):
     with nested_transaction_on_connection(db):
         base.metadata.create_all(bind=db, checkfirst=False)
-        yield Session(db)
+        # https://github.com/sqlalchemy/sqlalchemy/discussions/12006#discussioncomment-10979244
+        yield Session(db, join_transaction_mode="control_fully")

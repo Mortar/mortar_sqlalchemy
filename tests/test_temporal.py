@@ -1,13 +1,14 @@
 from datetime import datetime as dt
 
 import pytest
-from psycopg2.extras import DateTimeRange as Range
+from sqlalchemy import text
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Integer, String
 from testfixtures import ShouldRaise, compare, LogCapture
 
 from mortar_sqlalchemy import Common, Temporal
+from mortar_sqlalchemy.mixins.temporal import DateTimeRange as Range
 from mortar_sqlalchemy.testing import create_tables_and_session
 
 
@@ -591,11 +592,11 @@ class SetForPeriodHelpers:
     def check(self, *expected):
         self.session.flush()
         compare(expected, actual=[
-            (row['key'], row['value'], row['l'], row['u'])
-            for row in self.session.execute(
+            (row.key, row.value, row.l, row.u)
+            for row in self.session.execute(text(
                 'select key, value, lower(period) as l, upper(period) as u '
                 'from model order by key, l'
-            )])
+            ))])
 
 
 class TestCoalesceSetForPeriod(SetForPeriodHelpers):
