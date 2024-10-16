@@ -17,7 +17,8 @@ jobs:
       - image: cimg/postgres:<< parameters.postgres >>
     steps:
       - run: "sudo apt install postgresql-client"
-      - python/pip-run-tests
+      - python/pip-run-tests:
+          command: "pytest -W error -W ignore::ResourceWarning --cov"
 
 common: &common
   jobs:
