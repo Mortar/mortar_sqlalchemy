@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import (
     TSRANGE as Range,
 )
 from sqlalchemy.event import listen
-from sqlalchemy.orm import has_inherited_table
+from sqlalchemy.orm import has_inherited_table, Mapped
 
 from itertools import zip_longest
 
@@ -62,10 +62,18 @@ def period_str(value_from, value_to):
 
 
 class Temporal(object):
+    """
+    This mixin takes advantage of the Postgres `range types`__ in order to help store
+    tabular information that changes over time.
 
+
+    __ https://www.postgresql.org/docs/current/rangetypes.html
+    """
+
+    #: The names of the columns that uniquely identify this row.
+    #: In a non-temporal model, this would be the table's primary key columns.
     key_columns: List[str] = None
     value_columns: List[str] = None
-    exclude_constraint: bool = True
 
     def __init__(self, **kw):
         value_from = kw.pop('value_from', None)
@@ -80,18 +88,26 @@ class Temporal(object):
             period = kw.pop('period', None)
         super(Temporal, self).__init__(period=period, **kw)
 
-    id = Column(Integer, primary_key=True)
-    period = Column(Range(), nullable=False)
+    #: The identifier for this row, which is an automatically generated integer
+    #: that is unique throughout the whole table.
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    #: The :class:`~sqlalchemy.schema.Column` specifying the period represented
+    #: by this row. When being set, this should be a :class:`~psycopg2.extras.DateTimeRange`.
+    #: When being retrieved, it will likewise be a :class:`~psycopg2.extras.DateTimeRange.`
+    period: Mapped[DateTimeRange] = Column(Range(), nullable=False)
 
     @classmethod
-    def value_at(cls, timestamp):
+    def value_at(cls, timestamp: datetime):
         """
         Returns a clause element that returns the current value
         """
         return cls.period.contains(timestamp)
 
     @property
-    def value_from(self):
+    def value_from(self) -> datetime:
+        """
+        A helper for retrieving or setting the lower bound of the :attr:`period`.
+        """
         return self.period.lower
 
     @value_from.setter
@@ -101,9 +117,18 @@ class Temporal(object):
         else:
             upper = self.period.upper
         self.period = DateTimeRange(timestamp, upper)
-        
+
+    #: Controls whether an `exclude constraint`__ is generated for this table, such that
+    #: accidental overlaps of data are prevented.
+    #:
+    #: __ https://www.postgresql.org/docs/current/rangetypes.html#RANGETYPES-CONSTRAINT
+    exclude_constraint: bool = True
+
     @property
-    def value_to(self):
+    def value_to(self) -> datetime:
+        """
+        A helper for retrieving or setting the upper bound of the :attr:`period`.
+        """
         return self.period.upper
 
     @value_to.setter
