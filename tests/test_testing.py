@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, Column, Integer, ForeignKey, inspect
 from sqlalchemy.orm import relationship, Session
 from testfixtures import compare
 from testservices.provider import Provider
-from testservices.services.databases import Database, DatabaseFromEnvironment, PostgresContainer
+from testservices.services.databases import DatabaseFromEnvironment, PostgresContainer
 
 from mortar_sqlalchemy.testing import drop_tables
 

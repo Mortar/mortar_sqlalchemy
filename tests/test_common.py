@@ -30,8 +30,8 @@ def another_model(base):
 
 
 @pytest.fixture()
-def session(db, base, model, another_model):
-    with create_tables_and_session(db, base) as session:
+def session(connection, base, model, another_model):
+    with create_tables_and_session(connection, base) as session:
         yield session
 
 

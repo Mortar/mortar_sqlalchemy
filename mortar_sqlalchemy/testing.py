@@ -17,26 +17,16 @@ def drop_tables(conn):
 @contextmanager
 def connection_in_transaction(url: str = None) -> Iterable[Connection]:
     engine = create_engine(url or environ['DB_URL'], future=True)
-    conn = engine.connect()
-    transaction = conn.begin()
+    connection = engine.connect()
+    transaction = connection.begin()
     try:
-        yield conn
+        yield connection
     finally:
         transaction.rollback()
 
 
 @contextmanager
-def nested_transaction_on_connection(conn):
-    transaction = conn.begin_nested()
-    with transaction:
-        yield
-        if transaction.is_active:
-            transaction.rollback()
-
-
-@contextmanager
-def create_tables_and_session(db, base):
-    with nested_transaction_on_connection(db):
-        base.metadata.create_all(bind=db, checkfirst=False)
-        # https://github.com/sqlalchemy/sqlalchemy/discussions/12006#discussioncomment-10979244
-        yield Session(db, join_transaction_mode="control_fully")
+def create_tables_and_session(connection, base):
+    base.metadata.create_all(bind=connection, checkfirst=False)
+    # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
+    yield Session(connection, join_transaction_mode="create_savepoint")

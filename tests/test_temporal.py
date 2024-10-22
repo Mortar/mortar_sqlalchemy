@@ -93,8 +93,8 @@ class TestConstructor:
 class TestValueAt:
 
     @pytest.fixture(autouse=True)
-    def objects(self, db, base, model):
-        with create_tables_and_session(db, base) as session:
+    def objects(self, connection, base, model):
+        with create_tables_and_session(connection, base) as session:
             session.add(model(
                     period=Range(dt(2000, 1, 1), dt(2001, 1, 1)),
                     name='Name 1-1'
@@ -135,9 +135,9 @@ class TestValueAt:
 class TestConstraints:
 
     @pytest.fixture(autouse=True)
-    def setup(self, db, base, model):
+    def setup(self, connection, base, model):
         self.Model = model
-        with create_tables_and_session(db, base) as session:
+        with create_tables_and_session(connection, base) as session:
             self.session = session
             yield
 
@@ -361,8 +361,8 @@ class TestExcludeConstraintConstruction:
         return Booking
 
     @pytest.fixture()
-    def session(self, db, base, booking):
-        with create_tables_and_session(db, base) as session:
+    def session(self, connection, base, booking):
+        with create_tables_and_session(connection, base) as session:
             yield session
 
     def test_valid(self, booking, session):
@@ -403,8 +403,8 @@ class TestExcludeConstraintTurnedOff:
         return Model
 
     @pytest.fixture()
-    def session(self, db, base, model):
-        with create_tables_and_session(db, base) as session:
+    def session(self, connection, base, model):
+        with create_tables_and_session(connection, base) as session:
             yield session
 
     def test_invalid(self, model, session):
@@ -498,8 +498,8 @@ class TestNoKeyColumns:
         return NoKeys
 
     @pytest.fixture()
-    def session(self, db, base, model):
-        with create_tables_and_session(db, base) as session:
+    def session(self, connection, base, model):
+        with create_tables_and_session(connection, base) as session:
             yield session
 
     def test_invalid(self, model, session):
@@ -541,8 +541,8 @@ class TestSingleTableInheritance:
         return Model2
 
     @pytest.fixture(autouse=True)
-    def session(self, db, base, model1, model2):
-        with create_tables_and_session(db, base) as session:
+    def session(self, connection, base, model1, model2):
+        with create_tables_and_session(connection, base) as session:
             yield session
 
     def test_only_two_constraints_created(self, base, table):
@@ -578,8 +578,8 @@ class SetForPeriodHelpers:
         return Model
 
     @pytest.fixture(autouse=True)
-    def session_(self, db, base):
-        with create_tables_and_session(db, base) as session:
+    def session_(self, connection, base):
+        with create_tables_and_session(connection, base) as session:
             self.session = session
             yield session
 

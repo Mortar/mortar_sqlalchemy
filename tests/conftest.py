@@ -19,13 +19,18 @@ database_provider = Provider[Database](
 
 
 @pytest.fixture(scope='session')
-def db() -> Iterable[Connection]:
-    with database_provider as database:
-        # Use psycopg3:
-        database.driver = 'psycopg'
-        with connection_in_transaction(database.url) as conn:
-            conn.execute(text('CREATE EXTENSION IF NOT EXISTS btree_gist'))
-            yield conn
+def database() -> Iterable[Database]:
+    with database_provider as database_:
+        yield database_
+
+
+@pytest.fixture()
+def connection(database: Database) -> Iterable[Connection]:
+    # Use psycopg3:
+    database.driver = 'psycopg'
+    with connection_in_transaction(database.url) as conn:
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS btree_gist'))
+        yield conn
 
 
 @pytest.fixture
