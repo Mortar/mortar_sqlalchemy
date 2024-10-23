@@ -32,15 +32,15 @@ common: &common
         name: coverage
         requires:
           - run-tests
-#
-#    - python/release:
-#        name: release
-#        config: .carthorse.yml
-#        requires:
-#          - coverage
-#        filters:
-#          branches:
-#            only: master
+
+    - python/release:
+        name: release
+        config: .carthorse.yml
+        requires:
+          - coverage
+        filters:
+          branches:
+            only: master
 
 workflows:
   push:

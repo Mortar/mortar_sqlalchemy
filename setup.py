@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 setup(
     name='mortar_sqlalchemy',
     author='Chris Withers',
-    version='1.0.0.dev1',
+    version='4.0.0',
     author_email='chris@withers.org',
     license='MIT',
     description="Mixins, Helpers and patterns for SQLAlchemy.",
