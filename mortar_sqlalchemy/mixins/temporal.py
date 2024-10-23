@@ -63,7 +63,7 @@ def period_str(value_from, value_to):
 
 class Temporal:
 
-    key_columns: List[str] = None
+    key_columns: List[str]
     value_columns: List[str] = None
     exclude_constraint: bool = True
 
@@ -315,7 +315,7 @@ def add_constraints_and_attributes(mapper, class_):
         return
     table = class_.__table__
 
-    if class_.key_columns is not None:
+    if getattr(class_, 'key_columns', None) is not None:
         elements = []
         for col_name in class_.key_columns:
             elements.append((getattr(class_, col_name), '='))
