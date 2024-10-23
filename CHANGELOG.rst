@@ -4,7 +4,7 @@ Changes
 4.0.0 (23 Oct 2024)
 -------------------
 
-- Rename this package from `mortar_mixins`__ to `mortar_sqlalchemy`__
+- Rename this package from `mortar_mixins`__ to `mortar_sqlalchemy`__.
 
 - Add rudimentary documentation.
 
