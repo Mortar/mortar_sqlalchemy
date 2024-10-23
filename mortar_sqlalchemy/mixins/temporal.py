@@ -61,7 +61,7 @@ def period_str(value_from, value_to):
     return '%s to %s' % (value_from, value_to)
 
 
-class Temporal(object):
+class Temporal:
 
     key_columns: List[str] = None
     value_columns: List[str] = None
