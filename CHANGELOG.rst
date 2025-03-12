@@ -12,7 +12,7 @@ Changes
 
 - SQLAlchemy 2, psycopg 3 and Python 3.11 are now the minimum supported versions.
 
-- Postres support is tested against versions 12.20 and 16.1.
+- Postgres support is tested against versions 12.20 and 16.1.
 
 __ https://pypi.org/project/mortar-mixins/#history
 
