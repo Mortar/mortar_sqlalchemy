@@ -75,9 +75,7 @@ class Common:
     __str__ = __repr__
 
 
-def compare_common(x, y, context):
-
-    ignore_fields = context.get_option('ignore_fields', ())
+def compare_common(x, y, context, ignore_fields: tuple = ()):
 
     if type(x) is not type(y):
         return compare_simple(x, y, context)
