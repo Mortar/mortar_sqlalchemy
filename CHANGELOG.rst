@@ -4,7 +4,7 @@ Changes
 4.1.0 (18 Jun 2025)
 -------------------
 
-- Support testfixtures v10 and above.
+- Support and requires testfixtures v12 and above.
 
 4.0.0 (23 Oct 2024)
 -------------------

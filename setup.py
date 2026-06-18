@@ -34,7 +34,7 @@ setup(
             'pytest',
             'pytest-cov',
             'sybil',
-            'testfixtures >= 10',
+            'testfixtures >= 12',
             'testservices >= 0.3',
         ],
         build=[

@@ -112,7 +112,7 @@ class TestCompare:
     def test_different_types(self, model, another_model):
         self.check_raises(
             model(id=1), another_model(id=1),
-            "Model(id=1) != AnotherModel(id=1)"
+            "not equal:\nModel(id=1)\nAnotherModel(id=1)"
         )
 
     def test_db_versus_non_db_equal(self, model, another_model, session):
